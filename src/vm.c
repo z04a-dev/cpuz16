@@ -23,8 +23,11 @@ int main(int argc, char *argv[]) {
 
 	// print_cpu_state(&cpuz16);	
 
-	start_lexer(&cpuz16, argv[1]);
+	start_lexer(argv[1]);
 
+	// print_ins_set();
+	
+	start_executing(&cpuz16);
 
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");

@@ -46,4 +46,10 @@ typedef struct s_cmd {
 	} val2;
 } cmd;
 
+typedef struct s_ins_pool {
+	cmd *cmds;
+	u16 count;
+	u16 capacity;
+} instruction_pool;
+
 
