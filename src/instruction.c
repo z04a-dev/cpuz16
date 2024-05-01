@@ -1,3 +1,4 @@
+#include <string.h>
 #ifndef u16
 #define u16 unsigned short
 #include "stdio.h"
@@ -9,7 +10,14 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define u16_MAX 65535
+
+/* god i hate stack overflow */
+#define MAX_RECURSIVE_DEPTH 10000 
+
 int DEBUG_PRINT = 0;
+
+int execute_block(cpu *_cpu, code_blocks *_code_blocks, code_block *target, u16 *depth); 
 
 static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 	if (_cmd.val2_type == T_VAL2_U16)
@@ -84,7 +92,6 @@ static void ins_add(cpu *_cpu, cmd _cmd, ...) {
 	}
 }
 
-
 static void ins_sub(cpu *_cpu, cmd _cmd) {
 
 	u16 value = get_val2_from_cmd(_cpu, _cmd);
@@ -128,46 +135,79 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 	}
 }
 
-static void ins_jmp(cpu *_cpu, ...) {
+static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, u16 *depth) {
+	if (*depth >= MAX_RECURSIVE_DEPTH) {
+		printf("[PANIC] jump depth is too high\n");
+		printf("[PANIC] risk of stack overflow\n");
+		return -1;
+	}
 	if (DEBUG_PRINT) {
 		printf("JMP\n");
 	}
 	(void)_cpu;
-} /* alpha (NOT USED) (TODO) */
+	if (_cmd.val1_type != T_VAL1_LABEL || _cmd.val2_type != T_VAL2_LABEL) {
+		printf("[PANIC] wrong variable type while jumping\n");
+	}
+	*depth += 1;
+	for (u16 i = 0; i < _code_blocks->count; ++i) {
+		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
+		if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
+			if (execute_block(_cpu, _code_blocks, &_code_blocks->block[i], depth) == -1)
+				return -1;
+			break;
+		}
+	}
+	return 0;
+} 
 
 static void ins_inc(cpu *_cpu, enum REGISTRY reg) {
 	switch(reg) {
 		case REG_RAX:
 			if (DEBUG_PRINT)
 				printf("INC RAX\n");
+			if (_cpu->rax == u16_MAX)
+				_cpu->rax = 0;
 			_cpu->rax++;
 			break;
 		case REG_RBX:
 			if (DEBUG_PRINT)
 				printf("INC RBX\n");
+			if (_cpu->rbx == u16_MAX)
+				_cpu->rbx = 0;
 			_cpu->rbx++;
 			break;
 		case REG_RDX:
 			if (DEBUG_PRINT)
 				printf("INC RDX\n");
+			if (_cpu->rdx == u16_MAX)
+				_cpu->rdx = 0;
 			_cpu->rdx++;
 			break;
 		case REG_A1:
 			if (DEBUG_PRINT)
 				printf("INC A1\n");
+			if (_cpu->a1 == u16_MAX)
+				_cpu->a1 = 0;
 			_cpu->a1++;
 			break;
 		case REG_A2:
 			if (DEBUG_PRINT)
 				printf("INC A2\n");
+			if (_cpu->a2 == u16_MAX)
+				_cpu->a2 = 0;
 			_cpu->a2++;
 			break;
 		case REG_A3:
 			if (DEBUG_PRINT)
 				printf("INC A3\n");
+			if (_cpu->a3 == u16_MAX)
+				_cpu->a3 = 0;
 			_cpu->a3++;
 			break;
 		case REG_INS:
+			if (_cpu->ins == 65535) {
+				_cpu->ins = 0;
+			}
 			_cpu->ins++;
 			break;
 	}
@@ -210,7 +250,7 @@ static void ins_dec(cpu *_cpu, enum REGISTRY reg) {
 				printf("DEC INS\n");
 			assert(0 && "You can't decrement instruction counter.");
 			break;
-		}
+	}
 }
 
 static void ins_halt(cpu *_cpu, ...) {
@@ -229,46 +269,73 @@ void ins_dbg_print() { /* turn on/off INS printing */
 	}
 }
 
-int execute_instruction(cpu *_cpu, cmd _cmd) {
-	switch(_cmd.ins) {
+cmd IC_add = {.ins = INS_INC,
+	.val1_type = T_VAL1_REG,
+	.val1.reg = REG_INS};
+
+
+int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, u16 *depth) {
+	switch(_cmd->ins) {
 		case INS_NOP:
 			ins_nop(_cpu); 
 			break;
 		case INS_JMP:
-			ins_jmp(_cpu); 
+			if (ins_jmp(_cpu, *_cmd, _code_blocks, depth) == -1) 
+				return -1;
 			break;
 		case INS_ADD:
-			if(_cmd.val1_type == T_VAL1_U16) {
+			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_ADD\n");
 				exit(1);
 			}
-			ins_add(_cpu, _cmd);
+			ins_add(_cpu, *_cmd);
 			break;
 		case INS_SUB:
-			if(_cmd.val1_type == T_VAL1_U16) {
+			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_SUB\n");
 				exit(1);
 			}
-			ins_sub(_cpu, _cmd);
+			ins_sub(_cpu, *_cmd);
 			break;
 		case INS_INC:
-			if(_cmd.val1_type == T_VAL1_U16) {
+			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_INC\n");
 				exit(1);
 			}
-			ins_inc(_cpu, _cmd.val1.reg); 
+			ins_inc(_cpu, _cmd->val1.reg); 
 			break;
 		case INS_DEC:
-			if(_cmd.val1_type == T_VAL1_U16) {
+			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_DEC\n");
 				exit(1);
 			}
-			ins_dec(_cpu, _cmd.val1.reg); 
+			ins_dec(_cpu, _cmd->val1.reg); 
 			break;
 		case INS_HALT:
 			ins_halt(_cpu); 
 			return -1;
 			break;
+		case INS_END:
+			printf("[WARNING] something went wrong, we processes and executed end; instruction.\n");
+			break;
+	}
+	return 0;
+}
+
+int jumps = 0;
+
+int execute_block(cpu *_cpu, code_blocks *_code_blocks, code_block *target, u16 *depth) {
+	if (DEBUG_PRINT) {
+		printf("CPU INS: %hu\n", _cpu->ins);
+		printf("CPU RBX: %hu\n", _cpu->rbx);
+		printf("CPU RAX: %hu\n", _cpu->rax);
+		printf("JUMPS: %d\n", ++jumps);
+	}
+	for (u16 ins = 0; ins < target->ins.count; ++ins) {
+		execute_instruction(_cpu, &IC_add, _code_blocks, depth);
+		if (execute_instruction(_cpu, &target->ins.cmds[ins], _code_blocks, depth) == -1) {
+			return -1;	
+		}
 	}
 	return 0;
 }

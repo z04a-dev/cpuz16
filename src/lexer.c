@@ -9,12 +9,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-bool HALT = false;
 #define LEXER_DEBUG_FILE false // debug at parsing
 #define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
 
 #define REG_LEN 7
 // TODO i guess i dont need REG_INS here
+// maybe i do...
 char *REG_NAMES[REG_LEN] = {"rax",
 	"rbx",
 	"rdx",
@@ -26,26 +26,38 @@ char *REG_NAMES[REG_LEN] = {"rax",
 
 int COUNT = -1; // TODO DELETE
 
-instruction_pool ins_pool = {.capacity = -1};
+// instruction_pool ins_pool = {.capacity = -1};
+code_blocks blocks = {.capacity = -1};
 
-static void add_ins_to_pool(cmd _cmd) {
-	if (ins_pool.count == ins_pool.capacity) {
+void free_blocks() {
+	printf("[VM] freeing blocks\n");
+	if (blocks.count != 0) {
+		for (u16 i = 0; i < blocks.count; ++i) {
+			if (blocks.block[i].ins.count != 0) {
+				free(blocks.block[i].ins.cmds);
+			}
+		}
+		free(blocks.block);
+	}
+}
+
+static void add_ins_to_pool(instruction_pool *pool, cmd _cmd) {
+	if (pool->count == pool->capacity) {
 		printf("[ERROR] ROM overflow");
 		exit(1);
 	}
-	ins_pool.count++;
-	ins_pool.cmds = realloc(ins_pool.cmds, ins_pool.count * sizeof(cmd));
-	ins_pool.cmds[ins_pool.count - 1] = _cmd;
+	pool->count++;
+	pool->cmds = realloc(pool->cmds, pool->count * sizeof(cmd));
+	pool->cmds[pool->count - 1] = _cmd;
 }
 
 static char *remove_start_whitespaces(char *str) {
 	unsigned int index = 0;
-	while (str[index] == ' ') {
+	while (str[index] == ' ' || str[index] == '\t') {
 		index++;
 	}
-	char *_new_str = malloc((strlen(str) - index) * sizeof(char));
-	strcpy(_new_str, &str[index]);
-	return _new_str;
+	str = &str[index];
+	return str; 
 }
 
 static bool is_comment(char *str) {
@@ -72,10 +84,14 @@ static enum INSTRUCTION recognize_ins(char *ins) {
 		return INS_INC;
 	if (strcmp(ins, "dec") == 0)
 		return INS_DEC;
+	if (strcmp(ins, "jmp") == 0)
+		return INS_JMP;
 	if (strcmp(ins, "halt") == 0)
 		return INS_HALT;
 	if (strcmp(ins, "nop") == 0)
 		return INS_NOP;
+	if (strcmp(ins, "end") == 0)
+		return INS_END;
 	return -1;
 }
 
@@ -101,6 +117,9 @@ static char *ins_to_str(enum INSTRUCTION ins) {
 			break;
 		case INS_JMP:
 			return "JMP";
+			break;
+		case INS_END:
+			return "END";
 			break;
 	}
 	return "";
@@ -165,6 +184,17 @@ static bool is_token_registry(char *token, int *reg) {
 	return false;
 }
 
+static void populate_code_blocks(code_block _block) {
+	if (blocks.count == 65535) {
+		printf("[PANIC] too much code blocks (must be less than 65535)");
+		exit(1);
+	}
+	blocks.count++;
+	blocks.block = realloc(blocks.block, blocks.count * sizeof(code_block));
+	blocks.block[blocks.count - 1] = _block;
+}
+
+
 static cmd tokenize_str(char *str) {
 	cmd _cmd = {0};
 	char *DEBUG_STR;
@@ -189,11 +219,18 @@ static cmd tokenize_str(char *str) {
 		if (p_clean != NULL) {
 			*p_clean = '\0';
 		}
-		if (count == 0)
+		if (count == 0) {
 			_cmd.ins = recognize_ins(token); 
+			if (strcmp(token, "jmp") == 0) {
+				_cmd.val1_type = T_VAL1_LABEL;
+				_cmd.val2_type = T_VAL2_LABEL;
+			}
+		}
 		else if (count == 1) {
 			int reg = 0;
-			if (is_token_registry(token, &reg)) {
+			if (_cmd.val1_type == T_VAL1_LABEL)
+				asprintf(&_cmd.val1.label, "%s", token);
+			else if (is_token_registry(token, &reg)) {
 				assert(!(_cmd.ins == INS_INC && reg == REG_INS) && "You can't increment IC manually.");
 
 				_cmd.val1_type = T_VAL1_REG;
@@ -205,7 +242,9 @@ static cmd tokenize_str(char *str) {
 		}
 		else if (count == 2) {
 			int reg = 0;
-			if (is_token_registry(token, &reg)) {
+			if (_cmd.val2_type == T_VAL2_LABEL)
+				asprintf(&_cmd.val2.label, "%s", token);
+			else if (is_token_registry(token, &reg)) {
 				_cmd.val2_type = T_VAL2_REG;
 				_cmd.val2.reg = reg; 
 			} else {
@@ -222,6 +261,9 @@ static cmd tokenize_str(char *str) {
 		printf("SIGILL: lllegal instruction: <%s>\n", DEBUG_STR);
 		exit(1);
 	}
+
+	if (token != NULL)
+		free(token);
 
 	// printf("%s\n", 
 	// 		_cmd.ins == INS_ADD ? "ADD" :
@@ -243,20 +285,31 @@ static cmd tokenize_str(char *str) {
 	return _cmd; 
 }
 
-
-static void process_str(char *str) {
+static bool process_str(char *str, code_block *block) {
 	COUNT++;
 	char *end_ptr = strrchr(str, '\n');
 	if (end_ptr != NULL) {
 		*end_ptr = '\0';
 	}
 	if (strlen(str) == 0)
-		return;
+		return true;
 	str = remove_start_whitespaces(str);
 	if (is_comment(str))
-		return;
+		return true;
 	cmd _cmd = tokenize_str(str);
-	add_ins_to_pool(_cmd);
+	if (_cmd.ins == INS_END) {
+		return false;
+	}
+	add_ins_to_pool(&block->ins, _cmd);
+	return true;
+}
+
+static bool check_for_start() {
+	for (u16 i = 0; i < blocks.count; ++i) {
+		if (strcmp(blocks.block[i].label, "start") == 0)
+			return true;
+	}
+	return false;
 }
 
 void start_lexer(char *asm_file) {
@@ -266,55 +319,89 @@ void start_lexer(char *asm_file) {
 
 	FILE* asm_f;
 	asm_f = fopen(asm_file, "r");
+	/* wow that's a lot of char* */
+	/* thats dumb :) */
 	char line[512];
-	while (fgets(line, 512, asm_f) && !HALT) {
-		process_str(line);
-	}
-	fclose(asm_f);
-}
+	char *t_line;
+	char *token;
+	char *pColumn;
+	while (fgets(line, 512, asm_f)) {
+		asprintf(&t_line, "%s", line);
+		t_line = remove_start_whitespaces(t_line);
+		token = strtok(t_line, " ");
+		pColumn = strrchr(t_line, ':');
+		if (pColumn == NULL || strlen(token) <= 2)
+			continue;
+		*pColumn = '\0';
+		code_block block = {.ins = {.capacity = -1}};
+		asprintf(&block.label, "%s", token);
+		bool eof = false;
+		do {
+			if (!fgets(line, 512, asm_f)) {
+				eof = true;
+				break;
+			}
+		} while (process_str(line, &block));
+		populate_code_blocks(block);
+		if(t_line != NULL)
+			free(t_line);
 
-void print_ins_set() {
-	for (u16 i = 0; i < ins_pool.count; ++i) {
-		printf("[%hu]: %s\n\n", i, ins_to_str(ins_pool.cmds[i].ins));
-		printf("[%hu]: val1 %s\n", i, ins_pool.cmds[i].val1_type == T_VAL1_REG ? "REGISTRY" : "NUMBER");
-		if (ins_pool.cmds[i].val1_type == T_VAL1_REG)
-			printf("[%hu]: val1 %s\n\n", i, reg_to_str(ins_pool.cmds[i].val1.reg));
-		else
-			printf("[%hu]: val1 %d\n\n", i, ins_pool.cmds[i].val1.num);
-
-		printf("[%hu]: val2 %s\n", i, ins_pool.cmds[i].val2_type == T_VAL2_REG ? "REGISTRY" : "NUMBER");
-		if (ins_pool.cmds[i].val2_type == T_VAL2_REG)
-			printf("[%hu]: val2 %s\n\n", i, reg_to_str(ins_pool.cmds[i].val2.reg));
-		else
-			printf("[%hu]: val2 %d\n\n", i, ins_pool.cmds[i].val2.num);
-
-		printf("----------------\n");
-	}
-	printf("Total instruction count: %hu\n", ins_pool.count);
-}
-
-cmd IC_add = {.ins = INS_INC,
-				.val1_type = T_VAL1_REG,
-				.val1.reg = REG_INS};
-
-void reset_ins_pool() {
-	if (ins_pool.count != 0)
-		free(ins_pool.cmds);
-	ins_pool.count = 0;
-	ins_pool.capacity = 0;
-}
-
-void start_executing(cpu *_cpu) {
-	assert(ins_pool.count != 0 && "No instructions provided");	
-	if (LEXER_DEBUG_INSTRUCTIONS)
-		ins_dbg_print();
-	for (u16 i = 0; i < ins_pool.count; ++i) {
-		execute_instruction(_cpu, IC_add);
-		if (execute_instruction(_cpu, ins_pool.cmds[i]) == -1)
-			HALT = true;
-		if (HALT)
+		if (eof)
 			break;
 	}
-	reset_ins_pool();
+	fclose(asm_f);
+	if (!check_for_start()) {
+		printf("[PANIC] .start label is not found\n");
+		free_blocks();
+		exit(1);
+	}
+}
+
+void print_code_blocks() {
+	printf("code block count: %hu\n", blocks.count);
+	for (u16 i = 0; i < blocks.count; ++i) {
+		printf("block[%hu] %s\n", i, blocks.block[i].label);
+		for (u16 j = 0; j < blocks.block[i].ins.count; ++j) {
+			printf("INS[%hu] %s\n", j, ins_to_str(blocks.block[i].ins.cmds[j].ins));
+		}
+		printf("\n");
+	}
+}
+
+/* needs rewriting */
+// void print_ins_set() {
+// 	for (u16 i = 0; i < ins_pool.count; ++i) {
+// 		printf("[%hu]: %s\n\n", i, ins_to_str(ins_pool.cmds[i].ins));
+// 		printf("[%hu]: val1 %s\n", i, ins_pool.cmds[i].val1_type == T_VAL1_REG ? "REGISTRY" : "NUMBER");
+// 		if (ins_pool.cmds[i].val1_type == T_VAL1_REG)
+// 			printf("[%hu]: val1 %s\n\n", i, reg_to_str(ins_pool.cmds[i].val1.reg));
+// 		else
+// 			printf("[%hu]: val1 %d\n\n", i, ins_pool.cmds[i].val1.num);
+//
+// 		printf("[%hu]: val2 %s\n", i, ins_pool.cmds[i].val2_type == T_VAL2_REG ? "REGISTRY" : "NUMBER");
+// 		if (ins_pool.cmds[i].val2_type == T_VAL2_REG)
+// 			printf("[%hu]: val2 %s\n\n", i, reg_to_str(ins_pool.cmds[i].val2.reg));
+// 		else
+// 			printf("[%hu]: val2 %d\n\n", i, ins_pool.cmds[i].val2.num);
+//
+// 		printf("----------------\n");
+// 	}
+// 	printf("Total instruction count: %hu\n", ins_pool.count);
+// }
+
+
+void start_executing(cpu *_cpu) {
+	assert(blocks.count != 0 && "No code blocks provided");	
+	if (LEXER_DEBUG_INSTRUCTIONS)
+		ins_dbg_print();
+	u16 depth = 0;
+	for (u16 i = 0; i < blocks.count; ++i) {
+		if (strcmp(blocks.block[i].label, "start") == 0) {
+			if (execute_block(_cpu, &blocks, &blocks.block[i], &depth) == -1)
+				printf("[PANIC] HALTING\n");
+			break;
+		}
+	}
+	free_blocks();
 }
 #endif
