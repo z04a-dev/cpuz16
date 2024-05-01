@@ -10,7 +10,7 @@ end;
 
 lmao:
     inc rax;
-    jmp fn;
+    jmp nps;
     halt;
 end;
 

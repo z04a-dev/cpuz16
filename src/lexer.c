@@ -262,9 +262,6 @@ static cmd tokenize_str(char *str) {
 		exit(1);
 	}
 
-	if (token != NULL)
-		free(token);
-
 	// printf("%s\n", 
 	// 		_cmd.ins == INS_ADD ? "ADD" :
 	// 		_cmd.ins == INS_SUB ? "SUB" : 
