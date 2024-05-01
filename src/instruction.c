@@ -12,12 +12,9 @@
 
 #define u16_MAX 65535
 
-/* god i hate stack overflow */
-#define MAX_RECURSIVE_DEPTH 10000 
-
 int DEBUG_PRINT = 0;
 
-int execute_block(cpu *_cpu, code_blocks *_code_blocks, code_block *target, u16 *depth); 
+int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip); 
 
 static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 	if (_cmd.val2_type == T_VAL2_U16)
@@ -135,12 +132,7 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 	}
 }
 
-static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, u16 *depth) {
-	if (*depth >= MAX_RECURSIVE_DEPTH) {
-		printf("[PANIC] jump depth is too high\n");
-		printf("[PANIC] risk of stack overflow\n");
-		return -1;
-	}
+static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, instruction_pointer *_ip) {
 	if (DEBUG_PRINT) {
 		printf("JMP\n");
 	}
@@ -148,15 +140,17 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, u16 *depth) {
 	if (_cmd.val1_type != T_VAL1_LABEL || _cmd.val2_type != T_VAL2_LABEL) {
 		printf("[PANIC] wrong variable type while jumping\n");
 	}
-	*depth += 1;
 	for (u16 i = 0; i < _code_blocks->count; ++i) {
 		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
 		if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
-			if (execute_block(_cpu, _code_blocks, &_code_blocks->block[i], depth) == -1)
-				return -1;
+			if (_code_blocks->block[i].ins.count != 0) {
+				_ip->block = &_code_blocks->block[i];
+				_ip->ins = 0;
+			}
 			break;
 		}
 	}
+
 	return 0;
 } 
 
@@ -165,49 +159,34 @@ static void ins_inc(cpu *_cpu, enum REGISTRY reg) {
 		case REG_RAX:
 			if (DEBUG_PRINT)
 				printf("INC RAX\n");
-			if (_cpu->rax == u16_MAX)
-				_cpu->rax = 0;
 			_cpu->rax++;
 			break;
 		case REG_RBX:
 			if (DEBUG_PRINT)
 				printf("INC RBX\n");
-			if (_cpu->rbx == u16_MAX)
-				_cpu->rbx = 0;
 			_cpu->rbx++;
 			break;
 		case REG_RDX:
 			if (DEBUG_PRINT)
 				printf("INC RDX\n");
-			if (_cpu->rdx == u16_MAX)
-				_cpu->rdx = 0;
 			_cpu->rdx++;
 			break;
 		case REG_A1:
 			if (DEBUG_PRINT)
 				printf("INC A1\n");
-			if (_cpu->a1 == u16_MAX)
-				_cpu->a1 = 0;
 			_cpu->a1++;
 			break;
 		case REG_A2:
 			if (DEBUG_PRINT)
 				printf("INC A2\n");
-			if (_cpu->a2 == u16_MAX)
-				_cpu->a2 = 0;
 			_cpu->a2++;
 			break;
 		case REG_A3:
 			if (DEBUG_PRINT)
 				printf("INC A3\n");
-			if (_cpu->a3 == u16_MAX)
-				_cpu->a3 = 0;
 			_cpu->a3++;
 			break;
 		case REG_INS:
-			if (_cpu->ins == 65535) {
-				_cpu->ins = 0;
-			}
 			_cpu->ins++;
 			break;
 	}
@@ -269,18 +248,13 @@ void ins_dbg_print() { /* turn on/off INS printing */
 	}
 }
 
-cmd IC_add = {.ins = INS_INC,
-	.val1_type = T_VAL1_REG,
-	.val1.reg = REG_INS};
-
-
-int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, u16 *depth) {
+int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruction_pointer *_ip) {
 	switch(_cmd->ins) {
 		case INS_NOP:
 			ins_nop(_cpu); 
 			break;
 		case INS_JMP:
-			if (ins_jmp(_cpu, *_cmd, _code_blocks, depth) == -1) 
+			if (ins_jmp(_cpu, *_cmd, _code_blocks, _ip) == -1) 
 				return -1;
 			break;
 		case INS_ADD:
@@ -316,31 +290,22 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, u16 *de
 			return -1;
 			break;
 		case INS_END:
-			printf("[WARNING] something went wrong, we processes and executed end; instruction.\n");
+			printf("[WARNING] something went wrong, we executed end; instruction during runtime.\n");
 			break;
 	}
 	return 0;
 }
 
-int jumps = 0;
 
-int execute_block(cpu *_cpu, code_blocks *_code_blocks, code_block *target, u16 *depth) {
-	if (DEBUG_PRINT) {
-		printf("CPU INS: %hu\n", _cpu->ins);
-		printf("CPU RBX: %hu\n", _cpu->rbx);
-		printf("CPU RAX: %hu\n", _cpu->rax);
-		printf("JUMPS: %d\n", ++jumps);
+int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip) {
+	while (execute_instruction(_cpu, &_ip->block->ins.cmds[_ip->ins], _code_blocks, _ip) != -1) {
+		ins_inc(_cpu, REG_INS); /* instruction counter + 1 */
+		_ip->ins++;
+		// printf("CPU INS: %hu\n", _cpu->ins);
+		// printf("CPU RBX: %hu\n", _cpu->rbx);
+		// printf("CPU RAX: %hu\n", _cpu->rax);
 	}
-	u16 current_depth = *depth;
-	for (u16 ins = 0; ins < target->ins.count; ++ins) {
-		execute_instruction(_cpu, &IC_add, _code_blocks, depth);
-		if (execute_instruction(_cpu, &target->ins.cmds[ins], _code_blocks, depth) == -1) {
-			*depth = current_depth;
-			return -1;	
-		}
-	}
-	*depth = current_depth;
-	return 0;
+	return -1;
 }
 
 #endif

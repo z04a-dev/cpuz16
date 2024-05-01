@@ -4,8 +4,6 @@ start:
 end;
 
 fn:
-    inc rbx;
-    inc rbx;
     jmp lmao;
     inc rax;
 end;
@@ -13,6 +11,7 @@ end;
 lmao:
     inc rax;
     jmp fn;
+    halt;
 end;
 
 nps:

@@ -67,4 +67,9 @@ typedef struct s_code_blocks {
 	u16 capacity;
 } code_blocks;
 
+typedef struct s_ins_pointer {
+	code_block *block;
+	u16 ins;
+} instruction_pointer;
+
 

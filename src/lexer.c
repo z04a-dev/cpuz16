@@ -306,8 +306,24 @@ static bool process_str(char *str, code_block *block) {
 
 static bool check_for_start() {
 	for (u16 i = 0; i < blocks.count; ++i) {
-		if (strcmp(blocks.block[i].label, "start") == 0)
+		if (strcmp(blocks.block[i].label, "start") == 0) {
+			// append HALT if it's not already present
+			// maybe we don't need it?....
+			// TODO
+			bool halt_presence = false;
+			for (u16 j = 0; j < blocks.block[i].ins.count; ++j) {
+				if (blocks.block[i].ins.cmds[j].ins == INS_HALT) {
+					halt_presence = !halt_presence;
+					break;
+				}
+			}
+			if (!halt_presence) {
+				cmd _haltcmd = {.ins = INS_HALT};
+				add_ins_to_pool(&blocks.block[i].ins, _haltcmd);
+			}
+				
 			return true;
+		}
 	}
 	return false;
 }
@@ -389,15 +405,17 @@ void print_code_blocks() {
 // 	printf("Total instruction count: %hu\n", ins_pool.count);
 // }
 
+instruction_pointer ip = {0};
 
 void start_executing(cpu *_cpu) {
 	assert(blocks.count != 0 && "No code blocks provided");	
 	if (LEXER_DEBUG_INSTRUCTIONS)
 		ins_dbg_print();
-	u16 depth = 0;
 	for (u16 i = 0; i < blocks.count; ++i) {
 		if (strcmp(blocks.block[i].label, "start") == 0) {
-			if (execute_block(_cpu, &blocks, &blocks.block[i], &depth) == -1)
+			ip.block = &blocks.block[i];
+			ip.ins = 0;
+			if (execute_code(_cpu, &blocks, &ip) == -1)
 				printf("[PANIC] HALTING\n");
 			break;
 		}
