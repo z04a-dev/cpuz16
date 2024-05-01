@@ -331,12 +331,15 @@ int execute_block(cpu *_cpu, code_blocks *_code_blocks, code_block *target, u16 
 		printf("CPU RAX: %hu\n", _cpu->rax);
 		printf("JUMPS: %d\n", ++jumps);
 	}
+	u16 current_depth = *depth;
 	for (u16 ins = 0; ins < target->ins.count; ++ins) {
 		execute_instruction(_cpu, &IC_add, _code_blocks, depth);
 		if (execute_instruction(_cpu, &target->ins.cmds[ins], _code_blocks, depth) == -1) {
+			*depth = current_depth;
 			return -1;	
 		}
 	}
+	*depth = current_depth;
 	return 0;
 }
 
