@@ -9,6 +9,8 @@
 - rbx (16 bit)
 - a1, a2, a3 (16 bit)
 - ins (16 bit) <- instruction counter
+- stack (512 x 16 bit)
+- stack pointer (points to next available cell)
 
 ## instructions
 - jmp where <- jumps at label 
@@ -17,6 +19,8 @@
 - sub what, howmuch <- remove howmuch from what
 - inc what <- what += 1
 - dec what <- what -= 1
+- push what <- push register to stack
+- pop what <- pops value from stack to register
 - halt <- panic (stop executing)
 - end <- closes code block
 
@@ -51,6 +55,12 @@ start:
     add rax, 1;
     add rbx, 10;
     add rax, rbx;
+
+    add a3, 500;
+    push a3;
+    
+    sub a3, 1712;
+    pop a3;
 
     inc a1;
     inc a1;
