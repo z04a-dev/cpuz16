@@ -1,5 +1,5 @@
-# imaginary assembly CPU (16 bit) by z04a
-# Z16CPU
+# imaginary assembly CPU (16 bit) by z04a 
+***CPUZ16***
 
 ## everything is unsigned!
 
