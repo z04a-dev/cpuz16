@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
 		usage_panic(argv);
 	}
 
+
 	cpu cpuz16 = init_cpu();	
 
 	// print_cpu_state(&cpuz16);	

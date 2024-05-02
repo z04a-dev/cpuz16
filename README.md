@@ -21,6 +21,9 @@
 - dec what <- what -= 1
 - push what <- push register to stack
 - pop what <- pops value from stack to register
+- or reg, (reg or value) <- bitwise OR (result stored in reg1)
+- and reg, (reg or value) <- bitwise AND (result stored in reg1)
+- xor reg, (reg or value) <- bitwise XOR (result stored in reg1)
 - halt <- panic (stop executing)
 - end <- closes code block
 
@@ -63,6 +66,7 @@ start:
     pop a3;
 
     inc a1;
+    xor a1, a3;
     inc a1;
     jmp fn;
 

@@ -21,13 +21,13 @@ struct cpu init_cpu(){
 
 void print_cpu_state(struct cpu *_cpu) {
 	printf("CPUZ16 info:\n");
-	printf("rax: %hu\n", _cpu->rax);
-	printf("rbx: %hu\n", _cpu->rbx);
-	printf("rdx: %hu\n", _cpu->rdx);
-	printf("a1:  %hu\n", _cpu->a1);
-	printf("a2:  %hu\n", _cpu->a2);
-	printf("a3:  %hu\n", _cpu->a3);
-	// printf("Stack pointer: %p\n", _cpu->stack.pointer);
+	printf("rax: %5hu (0x%04x)\n", _cpu->rax, _cpu->rax);
+	printf("rbx: %5hu (0x%04x)\n", _cpu->rbx, _cpu->rbx);
+	printf("rdx: %5hu (0x%04x)\n", _cpu->rdx, _cpu->rdx);
+	printf("a1 : %5hu (0x%04x)\n", _cpu->a1 , _cpu->a1);
+	printf("a2 : %5hu (0x%04x)\n", _cpu->a2 , _cpu->a2);
+	printf("a3 : %5hu (0x%04x)\n", _cpu->a3 , _cpu->a3);
+	printf("Stack pointer: %p\n", (void*)_cpu->stack_pointer);
 	printf("Instruction counter: %hu\n\n", _cpu->ins);
 }
 

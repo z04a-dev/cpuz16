@@ -88,6 +88,12 @@ static enum INSTRUCTION recognize_ins(char *ins) {
 		return INS_PUSH;
 	if (strcmp(ins, "pop") == 0)
 		return INS_POP;
+	if (strcmp(ins, "or") == 0)
+		return INS_OR;
+	if (strcmp(ins, "and") == 0)
+		return INS_AND;
+	if (strcmp(ins, "xor") == 0)
+		return INS_XOR;
 	if (strcmp(ins, "halt") == 0)
 		return INS_HALT;
 	if (strcmp(ins, "nop") == 0)
@@ -111,12 +117,17 @@ static void debug_print_cmd(cmd *_cmd) {
 		asprintf(&_v2, "%s", reg_to_str(_cmd->val2.reg));
 
 	printf("[DEBUG] cmd: %s val1: %s val2: %s\n", 
-			_cmd->ins == INS_ADD ? "ADD" :
-			_cmd->ins == INS_SUB ? "SUB" : 
-			_cmd->ins == INS_INC ? "INC" :
-			_cmd->ins == INS_DEC ? "DEC" : 
-			_cmd->ins == INS_JMP ? "JMP" :
-			_cmd->ins == INS_NOP ? "NOP" :
+			_cmd->ins == INS_ADD  ? "ADD"  :
+			_cmd->ins == INS_SUB  ? "SUB"  : 
+			_cmd->ins == INS_INC  ? "INC"  :
+			_cmd->ins == INS_DEC  ? "DEC"  : 
+			_cmd->ins == INS_JMP  ? "JMP"  :
+			_cmd->ins == INS_PUSH ? "PUSH" :
+			_cmd->ins == INS_POP  ? "POP"  :
+			_cmd->ins == INS_OR   ? "OR"   :
+			_cmd->ins == INS_AND  ? "AND"  :
+			_cmd->ins == INS_XOR  ? "XOR"  :
+			_cmd->ins == INS_NOP  ? "NOP"  :
 			"HALT", _v1, _v2);
 }
 

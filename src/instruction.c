@@ -100,7 +100,16 @@ char *ins_to_str(enum INSTRUCTION ins) {
 		case INS_POP:
 			return "POP";
 			break;
-	}
+		case INS_OR:
+			return "OR";
+			break;
+		case INS_AND:
+			return "AND";
+			break;
+		case INS_XOR:
+			return "XOR";
+			break;
+		}
 	return "";
 }
 
@@ -371,6 +380,24 @@ static int ins_pop(cpu *_cpu, cmd *_cmd) {
 	return 0;
 }
 
+static void ins_or(cpu *_cpu, cmd *_cmd) {
+	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
+	put_value_in_reg(_cpu, _cmd->val1.reg, val1 | val2);
+}
+
+static void ins_and(cpu *_cpu, cmd *_cmd) {
+	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
+	put_value_in_reg(_cpu, _cmd->val1.reg, val1 & val2);
+}
+
+static void ins_xor(cpu *_cpu, cmd *_cmd) {
+	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
+	put_value_in_reg(_cpu, _cmd->val1.reg, val1 ^ val2);
+}
+
 static void ins_halt(cpu *_cpu, ...) {
 	(void)_cpu;
 	printf("[PANIC] MET HALT\n");
@@ -453,10 +480,33 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 			ins_pop(_cpu, _cmd);
 			_ip->ins++;
 			break;
+		case INS_OR:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_OR\n");
+				return -1;
+			}
+			ins_or(_cpu, _cmd);
+			_ip->ins++;
+			break;
+		case INS_AND:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_AND\n");
+				return -1;
+			}
+			ins_and(_cpu, _cmd);
+			_ip->ins++;
+			break;
+		case INS_XOR:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_XOR\n");
+				return -1;
+			}
+			ins_xor(_cpu, _cmd);
+			_ip->ins++;
+			break;
 	}
 	return 0;
 }
-
 
 int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip) {
 	while (execute_instruction(_cpu, &_ip->block->ins.cmds[_ip->ins], _code_blocks, _ip) != -1) {
