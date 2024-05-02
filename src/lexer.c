@@ -10,7 +10,8 @@
 #include <stdbool.h>
 
 #define LEXER_DEBUG_FILE false // debug at parsing
-#define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
+#define LEXER_DEBUG_INSTRUCTIONS true // enable execute_instructions debug function
+#define LEXER_DEBUG_STACK false // print out stack 
 
 #define REG_LEN 7
 // TODO i guess i dont need REG_INS here
@@ -74,6 +75,8 @@ static bool is_comment(char *str) {
 } 
 
 static enum INSTRUCTION recognize_ins(char *ins) {
+	if (strcmp(ins, "mov") == 0)
+		return INS_MOV;
 	if (strcmp(ins, "add") == 0)
 		return INS_ADD;
 	if (strcmp(ins, "sub") == 0)
@@ -107,20 +110,29 @@ static void debug_print_cmd(cmd *_cmd) {
 	char *_v1;
 	if (_cmd->val1_type == T_VAL1_U16)
 		asprintf(&_v1, "%hu", _cmd->val1.num);
-	else
+	else if (_cmd->val1_type == T_VAL1_REG)
 		asprintf(&_v1, "%s", reg_to_str(_cmd->val1.reg));
+	else if (_cmd->val1_type == T_VAL1_LABEL)
+		asprintf(&_v1, "%s", _cmd->val1.label);
+	else if (_cmd->val1_type == T_VAL1_ADDRESS)
+		asprintf(&_v1, "#%04X", _cmd->val1.num);
 
 	char *_v2;
 	if (_cmd->val2_type == T_VAL2_U16)
 		asprintf(&_v2, "%hu", _cmd->val2.num);
-	else
+	else if (_cmd->val2_type == T_VAL2_REG)
 		asprintf(&_v2, "%s", reg_to_str(_cmd->val2.reg));
+	else if (_cmd->val2_type == T_VAL2_LABEL)
+		asprintf(&_v2, "%s", _cmd->val2.label);
+	else if (_cmd->val2_type == T_VAL2_ADDRESS)
+		asprintf(&_v2, "#%04X", _cmd->val2.num);
 
 	printf("[DEBUG] cmd: %s val1: %s val2: %s\n", 
+			_cmd->ins == INS_MOV  ? "MOV"  :
 			_cmd->ins == INS_ADD  ? "ADD"  :
-			_cmd->ins == INS_SUB  ? "SUB"  : 
+			_cmd->ins == INS_SUB  ? "SUB"  :
 			_cmd->ins == INS_INC  ? "INC"  :
-			_cmd->ins == INS_DEC  ? "DEC"  : 
+			_cmd->ins == INS_DEC  ? "DEC"  :
 			_cmd->ins == INS_JMP  ? "JMP"  :
 			_cmd->ins == INS_PUSH ? "PUSH" :
 			_cmd->ins == INS_POP  ? "POP"  :
@@ -137,6 +149,16 @@ static bool is_token_registry(char *token, int *reg) {
 			*reg = i;
 			return true;
 		}
+	return false;
+}
+
+static bool is_token_address(char *token) {
+	if (token[0] == '#' && strlen(token) == 5) {
+		// TODO implement hecking for bad values
+		// such as #00GJ
+		// 0 - 9 A - F
+		return true;
+	}
 	return false;
 }
 
@@ -186,9 +208,12 @@ static cmd tokenize_str(char *str) {
 				asprintf(&_cmd.val1.label, "%s", token);
 			else if (is_token_registry(token, &reg)) {
 				assert(!(_cmd.ins == INS_INC && reg == REG_INS) && "You can't increment IC manually.");
-
 				_cmd.val1_type = T_VAL1_REG;
 				_cmd.val1.reg = reg; 
+			} else if (is_token_address(token)) {
+				token++;
+				_cmd.val1_type = T_VAL1_ADDRESS;
+				_cmd.val1.num = (u16)strtol(token, NULL, 16);
 			} else {
 				_cmd.val1_type = T_VAL1_U16;
 				_cmd.val1.num = (u16)atoi(token); 
@@ -201,6 +226,10 @@ static cmd tokenize_str(char *str) {
 			else if (is_token_registry(token, &reg)) {
 				_cmd.val2_type = T_VAL2_REG;
 				_cmd.val2.reg = reg; 
+			} else if (is_token_address(token)) {
+				token++;
+				_cmd.val2_type = T_VAL2_ADDRESS;
+				_cmd.val2.num = (u16)strtol(token, NULL, 16);
 			} else {
 				_cmd.val2_type = T_VAL2_U16;
 				_cmd.val2.num = (u16)atoi(token); 
@@ -356,26 +385,21 @@ void print_code_blocks() {
 // 	printf("Total instruction count: %hu\n", ins_pool.count);
 // }
 
-// TODO
-// integrate IP into cpu struct
-// it makes zero sense to leave it in lexer context
-instruction_pointer ip = {0};
-
 void start_executing(cpu *_cpu) {
 	assert(blocks.count != 0 && "No code blocks provided");	
 	if (LEXER_DEBUG_INSTRUCTIONS)
 		ins_dbg_print();
 	for (u16 i = 0; i < blocks.count; ++i) {
 		if (strcmp(blocks.block[i].label, "start") == 0) {
-			ip.block = &blocks.block[i];
-			ip.ins = 0;
-			if (execute_code(_cpu, &blocks, &ip) == -1)
+			_cpu->ip.block = &blocks.block[i];
+			_cpu->ip.ins = 0;
+			if (execute_code(_cpu, &blocks) == -1)
 				printf("[PANIC] HALTING\n");
 			break;
 		}
 	}
 	free_blocks();
-	if (LEXER_DEBUG_INSTRUCTIONS)
+	if (LEXER_DEBUG_STACK)
 		print_stack(_cpu);
 }
 #endif

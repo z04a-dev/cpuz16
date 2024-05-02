@@ -8,6 +8,7 @@
 struct cpu init_cpu();
 
 void print_cpu_state(struct cpu *_cpu);
+void print_memory(struct cpu *_cpu); 
 
 void reset_cpu_state(struct cpu *_cpu);
 void free_cpu(struct cpu *_cpu);

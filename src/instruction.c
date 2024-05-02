@@ -13,7 +13,7 @@
 
 int DEBUG_PRINT = 0;
 
-int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip); 
+int execute_code(cpu *_cpu, code_blocks *_code_blocks); 
 
 u16 get_registry_value(struct cpu *_cpu, enum REGISTRY reg) {
 	switch (reg) {
@@ -64,12 +64,16 @@ static void put_value_in_reg(cpu *_cpu, enum REGISTRY reg, u16 value) {
 static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 	if (_cmd.val2_type == T_VAL2_U16)
 		return _cmd.val2.num;
-	else 
+	else if (_cmd.val2_type == T_VAL2_REG)
 		return get_registry_value(_cpu, _cmd.val2.reg);
+	return 0;
 }
 
 char *ins_to_str(enum INSTRUCTION ins) {
 	switch (ins) {
+		case INS_MOV:
+			return "MOV";
+			break;
 		case INS_NOP:
 			return "NOP";
 			break;
@@ -252,7 +256,7 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 	}
 }
 
-static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, instruction_pointer *_ip) {
+static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT) {
 		printf("JMP\n");
 	}
@@ -264,8 +268,8 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, instruction_p
 		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
 		if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
 			if (_code_blocks->block[i].ins.count > 0) {
-				_ip->block = &_code_blocks->block[i];
-				_ip->ins = 0;
+				_cpu->ip.block = &_code_blocks->block[i];
+				_cpu->ip.ins = 0;
 			}
 			break;
 		}
@@ -381,18 +385,24 @@ static int ins_pop(cpu *_cpu, cmd *_cmd) {
 }
 
 static void ins_or(cpu *_cpu, cmd *_cmd) {
+	if (DEBUG_PRINT)
+		printf("OR %s, %hu\n", reg_to_str(_cmd->val1.reg), get_val2_from_cmd(_cpu, *_cmd));
 	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
 	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
 	put_value_in_reg(_cpu, _cmd->val1.reg, val1 | val2);
 }
 
 static void ins_and(cpu *_cpu, cmd *_cmd) {
+	if (DEBUG_PRINT)
+		printf("AND %s, %hu\n", reg_to_str(_cmd->val1.reg), get_val2_from_cmd(_cpu, *_cmd));
 	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
 	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
 	put_value_in_reg(_cpu, _cmd->val1.reg, val1 & val2);
 }
 
 static void ins_xor(cpu *_cpu, cmd *_cmd) {
+	if (DEBUG_PRINT)
+		printf("XOR %s, %hu\n", reg_to_str(_cmd->val1.reg), get_val2_from_cmd(_cpu, *_cmd));
 	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
 	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
 	put_value_in_reg(_cpu, _cmd->val1.reg, val1 ^ val2);
@@ -401,6 +411,51 @@ static void ins_xor(cpu *_cpu, cmd *_cmd) {
 static void ins_halt(cpu *_cpu, ...) {
 	(void)_cpu;
 	printf("[PANIC] MET HALT\n");
+}
+
+// most important one!
+static void ins_mov(cpu *_cpu, cmd *_cmd) {
+	if (_cmd->val1_type == T_VAL1_REG) {
+		if (DEBUG_PRINT) 
+			printf("MOV TO REG %s, %hu\n", reg_to_str(_cmd->val1.reg),
+					_cmd->val2_type == T_VAL2_ADDRESS ? _cmd->val2.num : get_val2_from_cmd(_cpu, *_cmd));
+		switch (_cmd->val2_type) {
+			case T_VAL2_REG: 
+				put_value_in_reg(_cpu, _cmd->val1.reg, get_val2_from_cmd(_cpu, *_cmd));
+				break;
+			case T_VAL2_U16: 
+				put_value_in_reg(_cpu, _cmd->val1.reg, get_val2_from_cmd(_cpu, *_cmd));
+				break;
+			case T_VAL2_ADDRESS:
+				assert (_cmd->val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				put_value_in_reg(_cpu, _cmd->val1.reg, _cpu->ram.cells[_cmd->val2.num]);
+				break;
+			default:
+				assert(0 && "well we shouldn't be here (INS_MOV)");
+				break;
+		}
+	} else if (_cmd->val1_type == T_VAL1_ADDRESS) {
+		if (DEBUG_PRINT) 
+			printf("MOV TO ADDR %hu, %hu\n", _cmd->val1.num, 
+					_cmd->val2_type == T_VAL2_ADDRESS ? _cmd->val2.num : get_val2_from_cmd(_cpu, *_cmd));
+		switch (_cmd->val2_type) {
+			case T_VAL2_REG: 
+				assert (_cmd->val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				_cpu->ram.cells[_cmd->val1.num] = get_val2_from_cmd(_cpu, *_cmd);
+				break;
+			case T_VAL2_U16: 
+				assert (_cmd->val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				_cpu->ram.cells[_cmd->val1.num] = get_val2_from_cmd(_cpu, *_cmd);
+				break;
+			case T_VAL2_ADDRESS:
+				assert (_cmd->val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				_cpu->ram.cells[_cmd->val1.num] = _cpu->ram.cells[_cmd->val2.num];
+				break;
+			default:
+				assert(0 && "well we shouldn't be here (INS_MOV)");
+				break;
+		}
+	}
 }
 
 void ins_dbg_print() { /* turn on/off INS printing */
@@ -414,14 +469,21 @@ void ins_dbg_print() { /* turn on/off INS printing */
 	}
 }
 
-int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruction_pointer *_ip) {
+int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 	switch(_cmd->ins) {
+		case INS_MOV:
+			assert(_cmd->val1_type != T_VAL1_U16 && "[ERROR] You can't mov data to num!");
+			// ins_nop(_cpu); 
+			ins_mov(_cpu, _cmd);
+			_cpu->ip.ins++;
+			break;
 		case INS_NOP:
 			ins_nop(_cpu); 
-			_ip->ins++;
+			_cpu->ip.ins++;
+
 			break;
 		case INS_JMP:
-			if (ins_jmp(_cpu, *_cmd, _code_blocks, _ip) == -1) 
+			if (ins_jmp(_cpu, *_cmd, _code_blocks) == -1) 
 				return -1;
 			break;
 		case INS_ADD:
@@ -430,7 +492,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_add(_cpu, *_cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_SUB:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -438,7 +500,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_sub(_cpu, *_cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_INC:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -446,7 +508,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_inc(_cpu, _cmd->val1.reg); 
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_DEC:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -454,11 +516,11 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_dec(_cpu, _cmd->val1.reg); 
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_HALT:
 			ins_halt(_cpu); 
-			_ip->ins++;
+			_cpu->ip.ins++;
 			return -1;
 			break;
 		case INS_END:
@@ -470,7 +532,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_push(_cpu, _cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_POP:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -478,7 +540,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_pop(_cpu, _cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_OR:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -486,7 +548,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_or(_cpu, _cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_AND:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -494,7 +556,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_and(_cpu, _cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 		case INS_XOR:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -502,14 +564,14 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_xor(_cpu, _cmd);
-			_ip->ins++;
+			_cpu->ip.ins++;
 			break;
 	}
 	return 0;
 }
 
-int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip) {
-	while (execute_instruction(_cpu, &_ip->block->ins.cmds[_ip->ins], _code_blocks, _ip) != -1) {
+int execute_code(cpu *_cpu, code_blocks *_code_blocks) {
+	while (execute_instruction(_cpu, &_cpu->ip.block->ins.cmds[_cpu->ip.ins], _code_blocks) != -1) {
 		ins_inc(_cpu, REG_INS); /* instruction counter + 1 */
 		// printf("CPU INS: %hu\n", _cpu->ins);
 		// printf("CPU RBX: %hu\n", _cpu->rbx);

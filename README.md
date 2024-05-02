@@ -11,8 +11,13 @@
 - ins (16 bit) <- instruction counter
 - stack (512 x 16 bit)
 - stack pointer (points to next available cell)
+- IP <- instruction pointer (what will be executed)
+
+## RAM
+RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
 
 ## instructions
+- mov where, what <- put something from what to where
 - jmp where <- jumps at label 
 - nop <- do nothing
 - add what, howmuch <- add howmuch to what

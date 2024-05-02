@@ -8,8 +8,8 @@
 
 void ins_dbg_print(); /* turn on/off INS printing */
 
-int execute_instruction(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, instruction_pointer *_ip); 
-int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip); 
+int execute_instruction(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks); 
+int execute_code(cpu *_cpu, code_blocks *_code_blocks); 
 
 void print_stack(cpu *_cpu); 
 char *ins_to_str(enum INSTRUCTION ins);

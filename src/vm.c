@@ -19,7 +19,6 @@ int main(int argc, char *argv[]) {
 		usage_panic(argv);
 	}
 
-
 	cpu cpuz16 = init_cpu();	
 
 	// print_cpu_state(&cpuz16);	
@@ -31,6 +30,8 @@ int main(int argc, char *argv[]) {
 	// print_ins_set();
 	
 	start_executing(&cpuz16);
+
+	// print_memory(&cpuz16);
 	
 	free_cpu(&cpuz16);
 	printf("\nVM reached end, halting...\n");
