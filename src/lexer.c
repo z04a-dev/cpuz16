@@ -23,10 +23,8 @@ char *REG_NAMES[REG_LEN] = {"rax",
 	"a3",
 	"ins"};
 
-
 int COUNT = -1; // TODO DELETE
 
-// instruction_pool ins_pool = {.capacity = -1};
 code_blocks blocks = {.capacity = -1};
 
 void free_blocks() {
@@ -86,6 +84,10 @@ static enum INSTRUCTION recognize_ins(char *ins) {
 		return INS_DEC;
 	if (strcmp(ins, "jmp") == 0)
 		return INS_JMP;
+	if (strcmp(ins, "push") == 0)
+		return INS_PUSH;
+	if (strcmp(ins, "pop") == 0)
+		return INS_POP;
 	if (strcmp(ins, "halt") == 0)
 		return INS_HALT;
 	if (strcmp(ins, "nop") == 0)
@@ -93,63 +95,6 @@ static enum INSTRUCTION recognize_ins(char *ins) {
 	if (strcmp(ins, "end") == 0)
 		return INS_END;
 	return -1;
-}
-
-static char *ins_to_str(enum INSTRUCTION ins) {
-	switch (ins) {
-		case INS_NOP:
-			return "NOP";
-			break;
-		case INS_ADD:
-			return "ADD";
-			break;
-		case INS_SUB:
-			return "SUB";
-			break;
-		case INS_INC:
-			return "INC";
-			break;
-		case INS_DEC:
-			return "DEC";
-			break;
-		case INS_HALT:
-			return "HALT";
-			break;
-		case INS_JMP:
-			return "JMP";
-			break;
-		case INS_END:
-			return "END";
-			break;
-	}
-	return "";
-}
-
-static char *reg_to_str(enum REGISTRY reg) {
-	switch (reg) {
-		case REG_RAX:
-			return "rax";
-			break;
-		case REG_RBX:
-			return "rbx";
-			break;
-		case REG_RDX:
-			return "rdx";
-			break;
-		case REG_A1:
-			return "a1";
-			break;
-		case REG_A2:
-			return "a2";
-			break;
-		case REG_A3:
-			return "a3";
-			break;
-		case REG_INS:
-			return "ins";
-			break;
-	}
-	return "";
 }
 
 static void debug_print_cmd(cmd *_cmd) {
@@ -194,12 +139,10 @@ static void populate_code_blocks(code_block _block) {
 	blocks.block[blocks.count - 1] = _block;
 }
 
-
 static cmd tokenize_str(char *str) {
 	cmd _cmd = {0};
 	char *DEBUG_STR;
 	asprintf(&DEBUG_STR, "%s", str);
-
 
 	char *token;
 	int count = 0;
@@ -402,6 +345,9 @@ void print_code_blocks() {
 // 	printf("Total instruction count: %hu\n", ins_pool.count);
 // }
 
+// TODO
+// integrate IP into cpu struct
+// it makes zero sense to leave it in lexer context
 instruction_pointer ip = {0};
 
 void start_executing(cpu *_cpu) {
@@ -418,5 +364,7 @@ void start_executing(cpu *_cpu) {
 		}
 	}
 	free_blocks();
+	if (LEXER_DEBUG_INSTRUCTIONS)
+		print_stack(_cpu);
 }
 #endif

@@ -2,7 +2,11 @@
 #define u16 unsigned short
 #endif
 
+#define STACK_SIZE 512
+
 typedef struct cpu {
+	u16 *stack_value;
+	u16 *stack_pointer;
 	u16 rax;
 	u16 rbx;
 	u16 rdx;
@@ -13,17 +17,23 @@ typedef struct cpu {
 } cpu;
 
 enum INSTRUCTION {
-	INS_NOP,
-	INS_JMP,
 	INS_ADD,
 	INS_SUB,
+
 	INS_INC,
 	INS_DEC,
+
+	INS_PUSH,
+	INS_POP,
+
+	INS_JMP,
 	INS_HALT,
+	INS_NOP,
+
 	INS_END,
 };
 
-enum REGISTRY {
+typedef enum REGISTRY {
 	REG_RAX,
 	REG_RBX,
 	REG_RDX,
@@ -31,7 +41,7 @@ enum REGISTRY {
 	REG_A2,
 	REG_A3,
 	REG_INS,
-};
+} REGISTRY;
 
 typedef struct s_cmd {
 	enum INSTRUCTION ins;
@@ -48,7 +58,6 @@ typedef struct s_cmd {
 		char *label;
 	} val2;
 } cmd;
-
 
 typedef struct s_ins_pool {
 	cmd *cmds;

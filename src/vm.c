@@ -1,11 +1,11 @@
-/* starting point for asm-machine ZCPU16 */
-/* read asm.md for more info */
+/* starting point for asm-machine CPUZ16 */
+/* read README.md for more info */
 /* by z04a */
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "registry.h"
+#include "registry.h" 
 #include "lexer.h"
 
 void usage_panic(char *argv[]) {
@@ -24,12 +24,14 @@ int main(int argc, char *argv[]) {
 	// print_cpu_state(&cpuz16);	
 
 	start_lexer(argv[1]);
+
 	// print_code_blocks();
 
 	// print_ins_set();
 	
 	start_executing(&cpuz16);
 	
+	free_cpu(&cpuz16);
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");
 	print_cpu_state(&cpuz16);
