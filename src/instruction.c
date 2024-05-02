@@ -254,7 +254,7 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks, instruction_p
 	for (u16 i = 0; i < _code_blocks->count; ++i) {
 		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
 		if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
-			if (_code_blocks->block[i].ins.count != 0) {
+			if (_code_blocks->block[i].ins.count > 0) {
 				_ip->block = &_code_blocks->block[i];
 				_ip->ins = 0;
 			}
@@ -391,6 +391,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 	switch(_cmd->ins) {
 		case INS_NOP:
 			ins_nop(_cpu); 
+			_ip->ins++;
 			break;
 		case INS_JMP:
 			if (ins_jmp(_cpu, *_cmd, _code_blocks, _ip) == -1) 
@@ -402,6 +403,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_add(_cpu, *_cmd);
+			_ip->ins++;
 			break;
 		case INS_SUB:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -409,6 +411,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_sub(_cpu, *_cmd);
+			_ip->ins++;
 			break;
 		case INS_INC:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -416,6 +419,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_inc(_cpu, _cmd->val1.reg); 
+			_ip->ins++;
 			break;
 		case INS_DEC:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -423,9 +427,11 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_dec(_cpu, _cmd->val1.reg); 
+			_ip->ins++;
 			break;
 		case INS_HALT:
 			ins_halt(_cpu); 
+			_ip->ins++;
 			return -1;
 			break;
 		case INS_END:
@@ -437,6 +443,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_push(_cpu, _cmd);
+			_ip->ins++;
 			break;
 		case INS_POP:
 			if(_cmd->val1_type == T_VAL1_U16) {
@@ -444,6 +451,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 				return -1;
 			}
 			ins_pop(_cpu, _cmd);
+			_ip->ins++;
 			break;
 	}
 	return 0;
@@ -453,7 +461,6 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks, instruc
 int execute_code(cpu *_cpu, code_blocks *_code_blocks, instruction_pointer *_ip) {
 	while (execute_instruction(_cpu, &_ip->block->ins.cmds[_ip->ins], _code_blocks, _ip) != -1) {
 		ins_inc(_cpu, REG_INS); /* instruction counter + 1 */
-		_ip->ins++;
 		// printf("CPU INS: %hu\n", _cpu->ins);
 		// printf("CPU RBX: %hu\n", _cpu->rbx);
 		// printf("CPU RAX: %hu\n", _cpu->rax);
