@@ -12,6 +12,7 @@
 - stack (512 x 16 bit)
 - stack pointer (points to next available cell)
 - IP <- instruction pointer (what will be executed)
+- RP <- return pointer (points to jmp+1 in caller function)
 
 ## RAM
 RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
@@ -19,6 +20,7 @@ RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
 ## instructions
 - mov where, what <- put something from what to where
 - jmp where <- jumps at label 
+- ret <- returns from function to rp
 - nop <- do nothing
 - add what, howmuch <- add howmuch to what
 - sub what, howmuch <- remove howmuch from what
@@ -46,10 +48,12 @@ HOWTO:
 start:
 ;; some code
     jmp example;
+;; if you don't put HALT in start, VM will put it automatically at the end.
 end;
 
 example:
 ;; another code block
+;; program will halt at the end of this fn, if you don't put RET here.
 end;
 ```
 
@@ -63,6 +67,7 @@ start:
     add rax, 1;
     add rbx, 10;
     add rax, rbx;
+    mov rax, #41FA;
 
     add a3, 500;
     push a3;
@@ -82,6 +87,7 @@ fn:
     inc rax;
     inc rax;
     sub rax, 7;
+    ret;
 end;
 
 ```
