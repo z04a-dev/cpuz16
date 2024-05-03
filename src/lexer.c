@@ -10,7 +10,7 @@
 #include <stdbool.h>
 
 #define LEXER_DEBUG_FILE false // debug at parsing
-#define LEXER_DEBUG_INSTRUCTIONS true // enable execute_instructions debug function
+#define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
 #define LEXER_DEBUG_STACK false // print out stack 
 
 #define REG_LEN 7
@@ -23,8 +23,6 @@ char *REG_NAMES[REG_LEN] = {"rax",
 	"a2",
 	"a3",
 	"ins"};
-
-int COUNT = -1; // TODO DELETE
 
 code_blocks blocks = {.capacity = -1};
 
@@ -87,6 +85,8 @@ static enum INSTRUCTION recognize_ins(char *ins) {
 		return INS_DEC;
 	if (strcmp(ins, "jmp") == 0)
 		return INS_JMP;
+	if (strcmp(ins, "ret") == 0)
+		return INS_RET;
 	if (strcmp(ins, "push") == 0)
 		return INS_PUSH;
 	if (strcmp(ins, "pop") == 0)
@@ -134,6 +134,7 @@ static void debug_print_cmd(cmd *_cmd) {
 			_cmd->ins == INS_INC  ? "INC"  :
 			_cmd->ins == INS_DEC  ? "DEC"  :
 			_cmd->ins == INS_JMP  ? "JMP"  :
+			_cmd->ins == INS_RET  ? "RET"  :
 			_cmd->ins == INS_PUSH ? "PUSH" :
 			_cmd->ins == INS_POP  ? "POP"  :
 			_cmd->ins == INS_OR   ? "OR"   :
@@ -154,7 +155,7 @@ static bool is_token_registry(char *token, int *reg) {
 
 static bool is_token_address(char *token) {
 	if (token[0] == '#' && strlen(token) == 5) {
-		// TODO implement hecking for bad values
+		// TODO implement checking for bad values
 		// such as #00GJ
 		// 0 - 9 A - F
 		return true;
@@ -266,7 +267,6 @@ static cmd tokenize_str(char *str) {
 }
 
 static bool process_str(char *str, code_block *block) {
-	COUNT++;
 	char *end_ptr = strrchr(str, '\n');
 	if (end_ptr != NULL) {
 		*end_ptr = '\0';

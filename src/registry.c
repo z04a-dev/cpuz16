@@ -18,7 +18,7 @@ static void init_memory(cpu *_cpu) {
 
 struct cpu init_cpu(){
 	printf("[CPUZ16] initializing register stack...\n");
-	cpu _cpu = {0};	
+	cpu _cpu = {0};
 	init_memory(&_cpu);
 	return _cpu;
 }

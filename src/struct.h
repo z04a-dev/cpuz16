@@ -22,6 +22,8 @@ enum INSTRUCTION {
 	INS_XOR,
 
 	INS_JMP,
+	INS_RET,
+
 	INS_HALT,
 	INS_NOP,
 
@@ -38,7 +40,7 @@ typedef enum REGISTRY {
 	REG_INS,
 } REGISTRY;
 
-typedef struct s_cmd {
+typedef struct {
 	enum INSTRUCTION ins;
 	enum{ T_VAL1_U16, T_VAL1_REG, T_VAL1_LABEL, T_VAL1_ADDRESS } val1_type;
 	union {
@@ -54,36 +56,39 @@ typedef struct s_cmd {
 	} val2;
 } cmd;
 
-typedef struct s_ins_pool {
+typedef struct {
 	cmd *cmds;
 	u16 count;
 	u16 capacity;
 } instruction_pool;
 
-typedef struct s_code_block {
+typedef struct {
 	instruction_pool ins;
 	char *label;
 } code_block;
 
-typedef struct s_code_blocks {
+typedef struct {
 	code_block *block;
 	u16 count;
 	u16 capacity;
 } code_blocks;
 
-typedef struct s_ins_pointer {
+typedef struct {
 	code_block *block;
 	u16 ins;
 } instruction_pointer;
 
-typedef struct ram {
+typedef struct {
 	u16 *cells;
 	u16 capacity;
 } ram;
 
+#define return_pointer instruction_pointer
+
 typedef struct cpu {
 	ram ram;
 	instruction_pointer ip;
+	return_pointer rp;
 	u16 *stack_value;
 	u16 *stack_pointer;
 	u16 rax;
