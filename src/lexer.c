@@ -260,6 +260,7 @@ static cmd _tokenize_str(cpu *_cpu, char *str) {
 		// printf("\n");
 		printf(" || OPCODE: %s 0x%04x\n", _cmd.ins.token, _cmd.ins.opcode);
 	}
+	free(DEBUG_STR);
 	return _cmd;
 }
 

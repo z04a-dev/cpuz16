@@ -21,9 +21,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	cpu cpuz16 = init_cpu();	
-	// free_cpu(&cpuz16);
-	// printf("EXIT DEBUG VM.C\n");
-	// exit(0);
 
 	// print_cpu_state(&cpuz16);	
 	//
