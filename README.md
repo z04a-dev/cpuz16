@@ -18,21 +18,21 @@
 RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
 
 ## instructions
-- mov where, what <- put something from what to where
-- jmp where <- jumps at label 
-- ret <- returns from function to rp
-- nop <- do nothing
-- add what, howmuch <- add howmuch to what
-- sub what, howmuch <- remove howmuch from what
-- inc what <- what += 1
-- dec what <- what -= 1
-- push what <- push register to stack
-- pop what <- pops value from stack to register
-- or reg, (reg or value) <- bitwise OR (result stored in reg1)
-- and reg, (reg or value) <- bitwise AND (result stored in reg1)
-- xor reg, (reg or value) <- bitwise XOR (result stored in reg1)
-- halt <- panic (stop executing)
-- end <- closes code block
+- #0001 mov where, what <- put something from what to where
+- #0006 jmp where <- jumps at label 
+- #0008 ret <- returns from function to rp
+- #0000 nop <- do nothing
+- #0002 add what, howmuch <- add howmuch to what
+- #0003 sub what, howmuch <- remove howmuch from what
+- #0004 inc what <- what += 1
+- #0005 dec what <- what -= 1
+- #000c push what <- push register to stack
+- #000d pop what <- pops value from stack to register
+- #0009 or reg, (reg or value) <- bitwise OR (result stored in reg1)
+- #000a and reg, (reg or value) <- bitwise AND (result stored in reg1)
+- #000b xor reg, (reg or value) <- bitwise XOR (result stored in reg1)
+- #000e halt <- panic (stop executing)
+- #000f end <- closes code block
 
 ## code blocks
 every .asm requires start: entry point

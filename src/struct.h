@@ -5,30 +5,17 @@
 #define STACK_SIZE 512
 #define RAM_SIZE 65535
 
-enum INSTRUCTION {
-	INS_MOV,
+typedef struct instruction {
+	u16 opcode;
+	const char *token;
+} ins;
 
-	INS_ADD,
-	INS_SUB,
+typedef struct instruction_set {
+	ins *ins;
+	unsigned int count;
+} instruction_set;
 
-	INS_INC,
-	INS_DEC,
-
-	INS_PUSH,
-	INS_POP,
-
-	INS_OR,
-	INS_AND,
-	INS_XOR,
-
-	INS_JMP,
-	INS_RET,
-
-	INS_HALT,
-	INS_NOP,
-
-	INS_END,
-};
+#define CLITERAL(type) (type) /* yoinked from raylib */
 
 typedef enum REGISTRY {
 	REG_RAX,
@@ -41,7 +28,7 @@ typedef enum REGISTRY {
 } REGISTRY;
 
 typedef struct {
-	enum INSTRUCTION ins;
+	ins ins;
 	enum{ T_VAL1_U16, T_VAL1_REG, T_VAL1_LABEL, T_VAL1_ADDRESS } val1_type;
 	union {
 		u16 num;
@@ -54,7 +41,14 @@ typedef struct {
 		enum REGISTRY reg;
 		char *label;
 	} val2;
+	enum{ T_VAL3_U16, T_VAL3_REG, T_VAL3_LABEL, T_VAL3_ADDRESS } val3_type;
+	union {
+		u16 num;
+		enum REGISTRY reg;
+		char *label;
+	} val3;
 } cmd;
+
 
 typedef struct {
 	cmd *cmds;
@@ -86,6 +80,7 @@ typedef struct {
 #define return_pointer instruction_pointer
 
 typedef struct cpu {
+	instruction_set isa;
 	ram ram;
 	instruction_pointer ip;
 	return_pointer rp;

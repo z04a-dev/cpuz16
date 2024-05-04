@@ -4,7 +4,7 @@
 #include "struct.h"
 // to execute code -> call start_lexer with path to .asm
 // after that call start_executing with initialized CPUZ16
-void start_lexer(char* asm_file);
+void start_lexer(cpu *_cpu, char* asm_file);
 void start_executing(cpu *_cpu); 
 // print_ins_set is not working at this commit.
 void print_ins_set();

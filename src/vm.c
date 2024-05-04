@@ -8,6 +8,7 @@
 #include "registry.h" 
 #include "lexer.h"
 
+
 void usage_panic(char *argv[]) {
 	printf("err: provide path to ins.asm\n");
 	printf("usage: %s <path/to/ins.asm>\n", argv[0]);
@@ -20,10 +21,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	cpu cpuz16 = init_cpu();	
+	// free_cpu(&cpuz16);
+	// printf("EXIT DEBUG VM.C\n");
+	// exit(0);
 
 	// print_cpu_state(&cpuz16);	
-
-	start_lexer(argv[1]);
+	//
+	start_lexer(&cpuz16, argv[1]);
 
 	// print_code_blocks();
 

@@ -12,7 +12,7 @@ int execute_instruction(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks);
 int execute_code(cpu *_cpu, code_blocks *_code_blocks); 
 
 void print_stack(cpu *_cpu); 
-char *ins_to_str(enum INSTRUCTION ins);
+// char *ins_to_str(enum INSTRUCTION ins);
 char *reg_to_str(enum REGISTRY reg);
 
 #endif

@@ -9,11 +9,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define u16_MAX 65535
-
 int DEBUG_PRINT = 0;
 
-int execute_code(cpu *_cpu, code_blocks *_code_blocks); 
+int execute_code(cpu *_cpu, code_blocks *_code_blocks);
 
 u16 get_registry_value(cpu *_cpu, enum REGISTRY reg) {
 	switch (reg) {
@@ -61,63 +59,20 @@ static void put_value_in_reg(cpu *_cpu, enum REGISTRY reg, u16 value) {
 	}
 }
 
+// static u16 get_val1_from_cmd(cpu *_cpu, cmd _cmd) {
+// 	if (_cmd.val1_type == T_VAL1_U16)
+// 		return _cmd.val1.num;
+// 	else if (_cmd.val1_type == T_VAL1_REG)
+// 		return get_registry_value(_cpu, _cmd.val1.reg);
+// 	return 0;
+// }
+
 static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 	if (_cmd.val2_type == T_VAL2_U16)
 		return _cmd.val2.num;
 	else if (_cmd.val2_type == T_VAL2_REG)
 		return get_registry_value(_cpu, _cmd.val2.reg);
 	return 0;
-}
-
-char *ins_to_str(enum INSTRUCTION ins) {
-	switch (ins) {
-		case INS_MOV:
-			return "MOV";
-			break;
-		case INS_NOP:
-			return "NOP";
-			break;
-		case INS_ADD:
-			return "ADD";
-			break;
-		case INS_SUB:
-			return "SUB";
-			break;
-		case INS_INC:
-			return "INC";
-			break;
-		case INS_DEC:
-			return "DEC";
-			break;
-		case INS_HALT:
-			return "HALT";
-			break;
-		case INS_JMP:
-			return "JMP";
-			break;
-		case INS_RET:
-			return "RET";
-			break;
-		case INS_END:
-			return "END";
-			break;
-		case INS_PUSH:
-			return "PUSH";
-			break;
-		case INS_POP:
-			return "POP";
-			break;
-		case INS_OR:
-			return "OR";
-			break;
-		case INS_AND:
-			return "AND";
-			break;
-		case INS_XOR:
-			return "XOR";
-			break;
-		}
-	return "";
 }
 
 char *reg_to_str(enum REGISTRY reg) {
@@ -263,8 +218,12 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT) {
 		printf("JMP");
 	}
-	if (_cmd.val1_type != T_VAL1_LABEL || _cmd.val2_type != T_VAL2_LABEL) {
+	if (_cmd.val1_type != T_VAL1_LABEL || _cmd.val2_type != T_VAL2_LABEL || _cmd.val3_type != T_VAL3_LABEL) {
+		printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
+		printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
+		printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
 		printf("[PANIC] wrong variable type while jumping\n");
+		return -1;
 	}
 	for (u16 i = 0; i < _code_blocks->count; ++i) {
 		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
@@ -279,10 +238,11 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 					printf(" IP: %s:%d\n", _cpu->ip.block->label, _cpu->ip.ins);
 				}
 			}
+			return 0;
 			break;
 		}
 	}
-	return 0;
+	return -1;
 } 
 
 static void ins_ret(cpu *_cpu) {
@@ -486,87 +446,87 @@ void ins_dbg_print() { /* turn on/off INS printing */
 }
 
 int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
-	switch(_cmd->ins) {
-		case INS_MOV:
+	switch(_cmd->ins.opcode) {
+		case 0x0001:
 			assert(_cmd->val1_type != T_VAL1_U16 && "[ERROR] You can't mov data to num!");
 			ins_mov(_cpu, _cmd);
 			break;
-		case INS_NOP:
+		case 0x0000:
 			ins_nop(_cpu); 
 			break;
-		case INS_JMP:
+		case 0x0006:
 			if (ins_jmp(_cpu, *_cmd, _code_blocks) == -1) 
 				return -1;
 			return 0;
 			break;
-		case INS_RET:
+		case 0x0008:
 			ins_ret(_cpu);
 			return 0;
 			break;
-		case INS_ADD:
+		case 0x0002:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_ADD\n");
 				return -1;
 			}
 			ins_add(_cpu, *_cmd);
 			break;
-		case INS_SUB:
+		case 0x0003:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_SUB\n");
 				return -1;
 			}
 			ins_sub(_cpu, *_cmd);
 			break;
-		case INS_INC:
+		case 0x0004:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_INC\n");
 				return -1;
 			}
 			ins_inc(_cpu, _cmd->val1.reg); 
 			break;
-		case INS_DEC:
+		case 0x0005:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_DEC\n");
 				return -1;
 			}
 			ins_dec(_cpu, _cmd->val1.reg); 
 			break;
-		case INS_HALT:
+		case 0x000e:
 			ins_halt(_cpu); 
 			return -1;
 			break;
-		case INS_END:
+		case 0x000f:
 			printf("[WARNING] something went wrong, we executed end; instruction during runtime.\n");
 			break;
-		case INS_PUSH:
+		case 0x000c:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_PUSH\n");
 				return -1;
 			}
 			ins_push(_cpu, _cmd);
 			break;
-		case INS_POP:
+		case 0x000d:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_POP\n");
 				return -1;
 			}
 			ins_pop(_cpu, _cmd);
 			break;
-		case INS_OR:
+		case 0x0009:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_OR\n");
 				return -1;
 			}
 			ins_or(_cpu, _cmd);
 			break;
-		case INS_AND:
+		case 0x000a:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_AND\n");
 				return -1;
 			}
 			ins_and(_cpu, _cmd);
 			break;
-		case INS_XOR:
+		case 0x000b:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_XOR\n");
 				return -1;

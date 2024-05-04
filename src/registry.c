@@ -5,7 +5,7 @@
 
 #ifndef _REG_IMPL_
 #define _REG_IMPL_
-#include "struct.h"
+#include "isa.h" /* includes struct.h */
 #include <stdlib.h>
 #include <assert.h>
 
@@ -20,6 +20,7 @@ struct cpu init_cpu(){
 	printf("[CPUZ16] initializing register stack...\n");
 	cpu _cpu = {0};
 	init_memory(&_cpu);
+	_cpu.isa = init_isa();
 	return _cpu;
 }
 
@@ -49,6 +50,9 @@ void print_cpu_state(struct cpu *_cpu) {
 	printf("a2 : %5hu (0x%04x)\n", _cpu->a2 , _cpu->a2);
 	printf("a3 : %5hu (0x%04x)\n", _cpu->a3 , _cpu->a3);
 	printf("Stack pointer: %p\n", (void*)_cpu->stack_pointer);
+	// TODO return pointer
+	// TODO free/max RAM/stack
+	// TODO RAM pointer
 	printf("Instruction counter: %hu\n\n", _cpu->ins);
 }
 
@@ -66,6 +70,7 @@ void reset_cpu_state(struct cpu *_cpu) {
 void free_cpu(struct cpu *_cpu) {
 	printf("[CPUZ16] unloading stack memory\n");
 	free(_cpu->ram.cells);
+	free(_cpu->isa.ins);
 }
 
 #endif
