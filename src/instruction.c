@@ -269,6 +269,7 @@ static int ins_call(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 			break;
 		}
 	}
+	printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
 	return -1;
 } 
 
@@ -292,6 +293,7 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 			break;
 		}
 	}
+	printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
 	return -1;
 } 
 
@@ -523,47 +525,47 @@ void print_stack(cpu *_cpu) {
 	}
 }
 
-static int ins_push(cpu *_cpu, cmd *_cmd) {
+static int ins_push(cpu *_cpu, cmd _cmd) {
 	if (DEBUG_PRINT)
-		printf("PUSH %s\n", reg_to_str(_cmd->val1.reg));
-	u16 reg_value = get_registry_value(_cpu, _cmd->val1.reg);
+		printf("PUSH %s\n", reg_to_str(_cmd.val1.reg));
+	u16 reg_value = get_registry_value(_cpu, _cmd.val1.reg);
 	if (push_stack(_cpu, &reg_value) == -1)
 		return -1;
 	return 0;
 }
 
-static int ins_pop(cpu *_cpu, cmd *_cmd) {
+static int ins_pop(cpu *_cpu, cmd _cmd) {
 	if (DEBUG_PRINT)
-		printf("POP %s\n", reg_to_str(_cmd->val1.reg));
+		printf("POP %s\n", reg_to_str(_cmd.val1.reg));
 	u16 reg_value; 
 	if (pop_stack(_cpu, &reg_value) == -1)
 		return -1;
-	put_value_in_reg(_cpu, _cmd->val1.reg, reg_value);
+	put_value_in_reg(_cpu, _cmd.val1.reg, reg_value);
 	return 0;
 }
 
-static void ins_or(cpu *_cpu, cmd *_cmd) {
+static void ins_or(cpu *_cpu, cmd _cmd) {
 	if (DEBUG_PRINT)
-		printf("OR %s, %hu\n", reg_to_str(_cmd->val1.reg), get_val2_from_cmd(_cpu, *_cmd));
-	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
-	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
-	put_value_in_reg(_cpu, _cmd->val1.reg, val1 | val2);
+		printf("OR %s, %hu\n", reg_to_str(_cmd.val1.reg), get_val2_from_cmd(_cpu, _cmd));
+	u16 val1 = get_registry_value(_cpu, _cmd.val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	put_value_in_reg(_cpu, _cmd.val1.reg, val1 | val2);
 }
 
-static void ins_and(cpu *_cpu, cmd *_cmd) {
+static void ins_and(cpu *_cpu, cmd _cmd) {
 	if (DEBUG_PRINT)
-		printf("AND %s, %hu\n", reg_to_str(_cmd->val1.reg), get_val2_from_cmd(_cpu, *_cmd));
-	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
-	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
-	put_value_in_reg(_cpu, _cmd->val1.reg, val1 & val2);
+		printf("AND %s, %hu\n", reg_to_str(_cmd.val1.reg), get_val2_from_cmd(_cpu, _cmd));
+	u16 val1 = get_registry_value(_cpu, _cmd.val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	put_value_in_reg(_cpu, _cmd.val1.reg, val1 & val2);
 }
 
-static void ins_xor(cpu *_cpu, cmd *_cmd) {
+static void ins_xor(cpu *_cpu, cmd _cmd) {
 	if (DEBUG_PRINT)
-		printf("XOR %s, %hu\n", reg_to_str(_cmd->val1.reg), get_val2_from_cmd(_cpu, *_cmd));
-	u16 val1 = get_registry_value(_cpu, _cmd->val1.reg);
-	u16 val2 = get_val2_from_cmd(_cpu, *_cmd);
-	put_value_in_reg(_cpu, _cmd->val1.reg, val1 ^ val2);
+		printf("XOR %s, %hu\n", reg_to_str(_cmd.val1.reg), get_val2_from_cmd(_cpu, _cmd));
+	u16 val1 = get_registry_value(_cpu, _cmd.val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	put_value_in_reg(_cpu, _cmd.val1.reg, val1 ^ val2);
 }
 
 static void ins_halt(cpu *_cpu, ...) {
@@ -572,42 +574,48 @@ static void ins_halt(cpu *_cpu, ...) {
 }
 
 // most important one!
-static void ins_mov(cpu *_cpu, cmd *_cmd) {
-	if (_cmd->val1_type == T_VAL1_REG) {
+static void ins_mov(cpu *_cpu, cmd _cmd) {
+	if (_cmd.val1_conv_addr) {
+		u16 value = get_registry_value(_cpu, _cmd.val1.reg);
+		_cmd.val1_type = T_VAL1_ADDRESS;
+		// printf("VALUE %hu\n", value);
+		_cmd.val1.num = value;
+	}
+	if (_cmd.val1_type == T_VAL1_REG) {
 		if (DEBUG_PRINT) 
-			printf("MOV TO REG %s, %hu\n", reg_to_str(_cmd->val1.reg),
-					_cmd->val2_type == T_VAL2_ADDRESS ? _cmd->val2.num : get_val2_from_cmd(_cpu, *_cmd));
-		switch (_cmd->val2_type) {
+			printf("MOV TO REG %s, %hu\n", reg_to_str(_cmd.val1.reg),
+					_cmd.val2_type == T_VAL2_ADDRESS ? _cmd.val2.num : get_val2_from_cmd(_cpu, _cmd));
+		switch (_cmd.val2_type) {
 			case T_VAL2_REG: 
-				put_value_in_reg(_cpu, _cmd->val1.reg, get_val2_from_cmd(_cpu, *_cmd));
+				put_value_in_reg(_cpu, _cmd.val1.reg, get_val2_from_cmd(_cpu, _cmd));
 				break;
 			case T_VAL2_U16: 
-				put_value_in_reg(_cpu, _cmd->val1.reg, get_val2_from_cmd(_cpu, *_cmd));
+				put_value_in_reg(_cpu, _cmd.val1.reg, get_val2_from_cmd(_cpu, _cmd));
 				break;
 			case T_VAL2_ADDRESS:
-				assert (_cmd->val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-				put_value_in_reg(_cpu, _cmd->val1.reg, _cpu->ram.cells[_cmd->val2.num]);
+				assert (_cmd.val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->ram.cells[_cmd.val2.num]);
 				break;
 			default:
 				assert(0 && "well we shouldn't be here (INS_MOV)");
 				break;
 		}
-	} else if (_cmd->val1_type == T_VAL1_ADDRESS) {
+	} else if (_cmd.val1_type == T_VAL1_ADDRESS) {
 		if (DEBUG_PRINT) 
-			printf("MOV TO ADDR %hu, %hu\n", _cmd->val1.num, 
-					_cmd->val2_type == T_VAL2_ADDRESS ? _cmd->val2.num : get_val2_from_cmd(_cpu, *_cmd));
-		switch (_cmd->val2_type) {
+			printf("MOV TO ADDR %hu, %hu\n", _cmd.val1.num, 
+					_cmd.val2_type == T_VAL2_ADDRESS ? _cmd.val2.num : get_val2_from_cmd(_cpu, _cmd));
+		switch (_cmd.val2_type) {
 			case T_VAL2_REG: 
-				assert (_cmd->val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-				_cpu->ram.cells[_cmd->val1.num] = get_val2_from_cmd(_cpu, *_cmd);
+				assert (_cmd.val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				_cpu->ram.cells[_cmd.val1.num] = get_val2_from_cmd(_cpu, _cmd);
 				break;
 			case T_VAL2_U16: 
-				assert (_cmd->val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-				_cpu->ram.cells[_cmd->val1.num] = get_val2_from_cmd(_cpu, *_cmd);
+				assert (_cmd.val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				_cpu->ram.cells[_cmd.val1.num] = get_val2_from_cmd(_cpu, _cmd);
 				break;
 			case T_VAL2_ADDRESS:
-				assert (_cmd->val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-				_cpu->ram.cells[_cmd->val1.num] = _cpu->ram.cells[_cmd->val2.num];
+				assert (_cmd.val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
+				_cpu->ram.cells[_cmd.val1.num] = _cpu->ram.cells[_cmd.val2.num];
 				break;
 			default:
 				assert(0 && "well we shouldn't be here (INS_MOV)");
@@ -635,7 +643,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			break;
 		case MOV_OPCODE:
 			assert(_cmd->val1_type != T_VAL1_U16 && "[ERROR] You can't mov data to num!");
-			ins_mov(_cpu, _cmd);
+			ins_mov(_cpu, *_cmd);
 			break;
 
 		case ADD_OPCODE:
@@ -688,21 +696,21 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 				printf("[ERROR] Illegal values provided to INS_OR\n");
 				return -1;
 			}
-			ins_or(_cpu, _cmd);
+			ins_or(_cpu, *_cmd);
 			break;
 		case AND_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_AND\n");
 				return -1;
 			}
-			ins_and(_cpu, _cmd);
+			ins_and(_cpu, *_cmd);
 			break;
 		case XOR_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_XOR\n");
 				return -1;
 			}
-			ins_xor(_cpu, _cmd);
+			ins_xor(_cpu, *_cmd);
 			break;
 
 		case PUSH_OPCODE:
@@ -710,14 +718,14 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 				printf("[ERROR] Illegal values provided to INS_PUSH\n");
 				return -1;
 			}
-			ins_push(_cpu, _cmd);
+			ins_push(_cpu, *_cmd);
 			break;
 		case POP_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_POP\n");
 				return -1;
 			}
-			ins_pop(_cpu, _cmd);
+			ins_pop(_cpu, *_cmd);
 			break;
 
 		case HALT_OPCODE:

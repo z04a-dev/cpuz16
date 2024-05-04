@@ -2,6 +2,7 @@
 #define u16 unsigned short
 #endif
 
+#include <stdbool.h>
 #define STACK_SIZE 512
 #define RAM_SIZE 65535
 
@@ -35,18 +36,21 @@ typedef struct {
 		enum REGISTRY reg;
 		char *label;
 	} val1;
+	bool val1_conv_addr;
 	enum{ T_VAL2_U16, T_VAL2_REG, T_VAL2_LABEL, T_VAL2_ADDRESS } val2_type;
 	union {
 		u16 num;
 		enum REGISTRY reg;
 		char *label;
 	} val2;
+	bool val2_conv_addr;
 	enum{ T_VAL3_U16, T_VAL3_REG, T_VAL3_LABEL, T_VAL3_ADDRESS } val3_type;
 	union {
 		u16 num;
 		enum REGISTRY reg;
 		char *label;
 	} val3;
+	bool val3_conv_addr;
 } cmd;
 
 
