@@ -18,21 +18,31 @@
 RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
 
 ## instructions
-- #0001 mov where, what <- put something from what to where
-- #0006 jmp where <- jumps at label 
-- #0008 ret <- returns from function to rp
 - #0000 nop <- do nothing
+- #0001 mov where, what <- put something from what to where
 - #0002 add what, howmuch <- add howmuch to what
 - #0003 sub what, howmuch <- remove howmuch from what
 - #0004 inc what <- what += 1
 - #0005 dec what <- what -= 1
+- #0006 jmp where <- jumps at label (don't save return pointer)
+- #0007 call where <- calls function (saves return pointer)
+- #0008 ret <- returns from function to rp
+- #000a and reg, (reg or value) <- bitwise AND (result stored in reg1)
+- #000b xor reg, (reg or value) <- bitwise XOR (result stored in reg1)
 - #000c push what <- push register to stack
 - #000d pop what <- pops value from stack to register
 - #0009 or reg, (reg or value) <- bitwise OR (result stored in reg1)
-- #000a and reg, (reg or value) <- bitwise AND (result stored in reg1)
-- #000b xor reg, (reg or value) <- bitwise XOR (result stored in reg1)
 - #000e halt <- panic (stop executing)
 - #000f end <- closes code block
+
+***conditional jump ISA extension***
+all of instructions receive three args: <REG || ADDR || NUM> <REG || ADDR || NUM> LABEL 
+- #0010 jeq <- if first arg == second arg, then jump
+- #0011 jne <- if first arg != second arg, then jump
+- #0012 jgt <- if first arg >  second arg, then jump
+- #0013 jlt <- if first arg <  second arg, then jump
+- #0014 jge <- if first arg >= second arg, then jump
+- #0015 jle <- if first arg <= second arg, then jump
 
 ## code blocks
 every .asm requires start: entry point
@@ -40,7 +50,6 @@ every .asm requires start: entry point
 you can define 65535 code blocks (including start:)
 
 it's possible to jump between code blocks using jmp (not possible to jump into start:)
-
 
 HOWTO:
 

@@ -8,17 +8,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "opcodes.h"
 
 #define LEXER_DEBUG_FILE false // debug at parsing
 #define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
 #define LEXER_DEBUG_STACK false // print out stack 
-
-#define HALT_OPCODE  0x000e
-#define INC_OPCODE   0x0004
-#define NOP_OPCODE   0x0000
-#define JMP_OPCODE   0x0006
-#define CALL_OPCODE  0x0007
-#define END_OPCODE   0x000f
 
 #define REG_LEN 7
 // TODO i guess i dont need REG_INS here
@@ -202,15 +196,25 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				break;
 			case 3:
 				// if (_cmd->ins.opcode == CONDITIONAL JUMP) TODO
-				if (is_token_registry(str, &reg)) {
-					_cmd->val3_type = T_VAL3_REG;
-					_cmd->val3.reg = reg; 
-				} else if (is_token_address(str)) {
-					_cmd->val3_type = T_VAL3_ADDRESS;
-					_cmd->val3.num = (u16)strtol(str, NULL, 16);
+				if (_cmd->ins.opcode == JEQ_OPCODE ||
+						_cmd->ins.opcode == JNE_OPCODE ||
+						_cmd->ins.opcode == JGT_OPCODE ||
+						_cmd->ins.opcode == JLT_OPCODE ||
+						_cmd->ins.opcode == JGE_OPCODE ||
+						_cmd->ins.opcode == JLE_OPCODE) {
+					_cmd->val3_type = T_VAL3_LABEL;
+					asprintf(&_cmd->val3.label, "%s", str);
 				} else {
-					_cmd->val3_type = T_VAL3_U16;
-					_cmd->val3.num = (u16)atoi(str);
+					if (is_token_registry(str, &reg)) {
+						_cmd->val3_type = T_VAL3_REG;
+						_cmd->val3.reg = reg; 
+					} else if (is_token_address(str)) {
+						_cmd->val3_type = T_VAL3_ADDRESS;
+						_cmd->val3.num = (u16)strtol(str, NULL, 16);
+					} else {
+						_cmd->val3_type = T_VAL3_U16;
+						_cmd->val3.num = (u16)atoi(str);
+					}
 				}
 				break;
 		}

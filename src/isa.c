@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "opcodes.h"
+
 static instruction_set variadic_populate_ins(int count, ...) {
 	instruction_set _ISA = {0};
 	va_list ap;
@@ -18,28 +20,37 @@ static instruction_set variadic_populate_ins(int count, ...) {
 }
 
 instruction_set init_isa() {
-	return variadic_populate_ins(16,
-					   CLITERAL(ins) {.opcode = 0x0000, .token = "nop"},
-					   CLITERAL(ins) {.opcode = 0x0001, .token = "mov"},
+	return variadic_populate_ins(22 /* <- DONT FORGET TO UPDATE */,
+					   CLITERAL(ins) {.opcode = NOP_OPCODE, .token = "nop"},
+					   CLITERAL(ins) {.opcode = MOV_OPCODE, .token = "mov"},
 
-					   CLITERAL(ins) {.opcode = 0x0002, .token = "add"},
-					   CLITERAL(ins) {.opcode = 0x0003, .token = "sub"},
+					   CLITERAL(ins) {.opcode = ADD_OPCODE, .token = "add"},
+					   CLITERAL(ins) {.opcode = SUB_OPCODE, .token = "sub"},
 
-					   CLITERAL(ins) {.opcode = 0x0004, .token = "inc"},
-					   CLITERAL(ins) {.opcode = 0x0005, .token = "dec"},
+					   CLITERAL(ins) {.opcode = INC_OPCODE, .token = "inc"},
+					   CLITERAL(ins) {.opcode = DEC_OPCODE, .token = "dec"},
 
-					   CLITERAL(ins) {.opcode = 0x0006, .token = "jmp",},
-					   CLITERAL(ins) {.opcode = 0x0007, .token = "call",},
-					   CLITERAL(ins) {.opcode = 0x0008, .token = "ret",},
+					   CLITERAL(ins) {.opcode = JMP_OPCODE, .token = "jmp",},
+					   CLITERAL(ins) {.opcode = CALL_OPCODE, .token = "call",},
+					   CLITERAL(ins) {.opcode = RET_OPCODE, .token = "ret",},
 
-					   CLITERAL(ins) {.opcode = 0x0009, .token = "or",},
-					   CLITERAL(ins) {.opcode = 0x000a, .token = "and",},
-					   CLITERAL(ins) {.opcode = 0x000b, .token = "xor",},
+					   CLITERAL(ins) {.opcode = OR_OPCODE, .token = "or",},
+					   CLITERAL(ins) {.opcode = AND_OPCODE, .token = "and",},
+					   CLITERAL(ins) {.opcode = XOR_OPCODE, .token = "xor",},
 
-					   CLITERAL(ins) {.opcode = 0x000c, .token = "push",},
-					   CLITERAL(ins) {.opcode = 0x000d, .token = "pop",},
+					   CLITERAL(ins) {.opcode = PUSH_OPCODE, .token = "push",},
+					   CLITERAL(ins) {.opcode = POP_OPCODE, .token = "pop",},
 
-					   CLITERAL(ins) {.opcode = 0x000e, .token = "halt",},
-					   CLITERAL(ins) {.opcode = 0x000f, .token = "end",});
+					   CLITERAL(ins) {.opcode = HALT_OPCODE, .token = "halt",},
+					   CLITERAL(ins) {.opcode = END_OPCODE, .token = "end",},
+
+					   /* conditional jmp ISA extension */
+					   CLITERAL(ins) {.opcode = JEQ_OPCODE, .token = "jeq",},
+					   CLITERAL(ins) {.opcode = JNE_OPCODE, .token = "jne",},
+					   CLITERAL(ins) {.opcode = JGT_OPCODE, .token = "jgt",},
+					   CLITERAL(ins) {.opcode = JLT_OPCODE, .token = "jlt",},
+					   CLITERAL(ins) {.opcode = JGE_OPCODE, .token = "jge",},
+					   CLITERAL(ins) {.opcode = JLE_OPCODE, .token = "jle",});
+
 }
 #endif

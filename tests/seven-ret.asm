@@ -2,7 +2,7 @@ start:
     inc rax;
     add a1, 50;
     nop;
-    jmp test;
+    call test;
     add a2, 70;
 end;
 
@@ -13,9 +13,9 @@ test:
     mov a1, 420;
     mov a2, 69;
     mov a3, 1337;
-    jmp pushregs;
-    jmp test2;
-    jmp popregs;
+    call pushregs;
+    call test2;
+    call popregs;
 end;
 
 test2:
