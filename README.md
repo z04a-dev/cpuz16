@@ -36,7 +36,8 @@ RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
 - #000f end <- closes code block
 
 ***conditional jump ISA extension***
-all of instructions receive three args: <REG || ADDR || NUM> <REG || ADDR || NUM> LABEL 
+all of instructions receive three args: 
+<REG || ADDR || NUM> <REG || ADDR || NUM> LABEL 
 - #0010 jeq <- if first arg == second arg, then jump
 - #0011 jne <- if first arg != second arg, then jump
 - #0012 jgt <- if first arg >  second arg, then jump
