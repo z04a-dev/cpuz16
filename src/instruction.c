@@ -640,6 +640,7 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	if(_cmd.val2_type != T_VAL2_REG && _cmd.val2_type != T_VAL2_U16)
 		assert(0 && "ILL exception: in SV second arg must be u16 or registry");
 	u16 addr = get_val1_from_cmd(_cpu, _cmd);
+	assert(addr <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using sv instruction");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	_cpu->ram.cells[addr] = val2;
 }

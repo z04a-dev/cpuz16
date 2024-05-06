@@ -1,11 +1,12 @@
 start:
-    jmp whileless1000;
+    jmp whileless;
 end;
 
-whileless1000:
-    jlt rax, 1000, incwhile;
+whileless:
+    jle rax, 255, incwhile;
+    ;; while is over at this point
     ;; get value from memory, and put it into rax
-    mov rax, 75;
+    mov rax, 255;
     lv rbx, rax;
     halt;
 end;
@@ -13,11 +14,11 @@ end;
 ;; it will execute 255 times!
 incwhile: 
     call fillcell;
-    jmp whileless1000;
+    jmp whileless;
 end;
 
 fillcell:
-    sv rax, 500;
+    sv rax, 420;
     inc rax;
     ret;
 end;

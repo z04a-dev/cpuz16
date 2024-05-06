@@ -15,12 +15,19 @@ void usage_panic(char *argv[]) {
 	exit(1);
 }
 
+// global variable Sadge
+cpu cpuz16;
+
+void exit_func(void) {
+	free_cpu(&cpuz16);
+}
+
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		usage_panic(argv);
 	}
 
-	cpu cpuz16 = init_cpu();	
+	cpuz16 = init_cpu();	
 
 	// print_cpu_state(&cpuz16);	
 	//
@@ -30,11 +37,13 @@ int main(int argc, char *argv[]) {
 
 	// print_ins_set();
 	
+	// that's cool!
+	atexit(exit_func);
+	
 	start_executing(&cpuz16);
 
 	// print_memory(&cpuz16);
 	
-	free_cpu(&cpuz16);
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");
 	print_cpu_state(&cpuz16);
