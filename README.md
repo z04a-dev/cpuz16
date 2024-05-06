@@ -45,6 +45,10 @@ all of instructions receive three args:
 - #0014 jge <- if first arg >= second arg, then jump
 - #0015 jle <- if first arg <= second arg, then jump
 
+***memory access ISA extension***
+- #0016 lv <- load value from arg2(mem addr) to arg1(reg)
+- #0017 sv <- put value of arg2 to arg1(pointer to mem)
+
 ## code blocks
 every .asm requires start: entry point
 

@@ -28,3 +28,7 @@
 #define JLT_OPCODE 0x0013
 #define JGE_OPCODE 0x0014
 #define JLE_OPCODE 0x0015
+
+/* memory access ISA extension */
+#define LV_OPCODE 0x0016
+#define SV_OPCODE 0x0017

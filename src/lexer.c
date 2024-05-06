@@ -170,10 +170,10 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 		int reg = 0;
 		switch (arg) {
 			case 1:
-				if (strlen(str) > 1 && str[0] == '*') {
-					_cmd->val1_conv_addr = true;
-					str = &str[1];
-				}
+				// if (strlen(str) > 1 && str[0] == '*') {
+				// 	_cmd->val1_conv_addr = true;
+				// 	str = &str[1];
+				// }
 				if (is_token_registry(str, &reg)) {
 					assert(!(_cmd->ins.opcode == INC_OPCODE && reg == REG_INS) && "You can't increment IC manually.");
 					_cmd->val1_type = T_VAL1_REG;
@@ -187,10 +187,10 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				}
 				break;
 			case 2:
-				if (strlen(str) > 1 && str[0] == '*') {
-					_cmd->val2_conv_addr = true;
-					str = &str[1];
-				}
+				// if (strlen(str) > 1 && str[0] == '*') {
+				// 	_cmd->val2_conv_addr = true;
+				// 	str = &str[1];
+				// }
 				if (is_token_registry(str, &reg)) {
 					_cmd->val2_type = T_VAL2_REG;
 					_cmd->val2.reg = reg; 
@@ -203,10 +203,10 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				}
 				break;
 			case 3:
-				if (strlen(str) > 1 && str[0] == '*') {
-					_cmd->val3_conv_addr = true;
-					str = &str[1];
-				}
+				// if (strlen(str) > 1 && str[0] == '*') {
+				// 	_cmd->val3_conv_addr = true;
+				// 	str = &str[1];
+				// }
 				// if (_cmd->ins.opcode == CONDITIONAL JUMP) TODO
 				if (_cmd->ins.opcode == JEQ_OPCODE ||
 						_cmd->ins.opcode == JNE_OPCODE ||

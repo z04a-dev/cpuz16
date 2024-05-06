@@ -4,6 +4,9 @@ end;
 
 whileless1000:
     jlt rax, 1000, incwhile;
+    ;; get value from memory, and put it into rax
+    mov rax, 75;
+    lv rbx, rax;
     halt;
 end;
 
@@ -14,7 +17,7 @@ incwhile:
 end;
 
 fillcell:
-    mov *rax, 500;
+    sv rax, 500;
     inc rax;
     ret;
 end;

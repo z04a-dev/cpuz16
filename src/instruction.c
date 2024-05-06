@@ -575,12 +575,12 @@ static void ins_halt(cpu *_cpu, ...) {
 
 // most important one!
 static void ins_mov(cpu *_cpu, cmd _cmd) {
-	if (_cmd.val1_conv_addr) {
-		u16 value = get_registry_value(_cpu, _cmd.val1.reg);
-		_cmd.val1_type = T_VAL1_ADDRESS;
-		// printf("VALUE %hu\n", value);
-		_cmd.val1.num = value;
-	}
+	// if (_cmd.val1_conv_addr) {
+	// 	u16 value = get_registry_value(_cpu, _cmd.val1.reg);
+	// 	_cmd.val1_type = T_VAL1_ADDRESS;
+	// 	// printf("VALUE %hu\n", value);
+	// 	_cmd.val1.num = value;
+	// }
 	if (_cmd.val1_type == T_VAL1_REG) {
 		if (DEBUG_PRINT) 
 			printf("MOV TO REG %s, %hu\n", reg_to_str(_cmd.val1.reg),
@@ -622,6 +622,26 @@ static void ins_mov(cpu *_cpu, cmd _cmd) {
 				break;
 		}
 	}
+}
+
+static void ins_lv(cpu *_cpu, cmd _cmd) {
+	if (DEBUG_PRINT)
+		printf("LV\n");
+	assert(_cmd.val1_type == T_VAL1_REG && "ILL exception: in LV first arg must be registry");
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	assert(val2 <= RAM_SIZE-STACK_SIZE && "Segmentation fault: you can't access stack using lv instruction");
+	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->ram.cells[val2]);
+}
+
+static void ins_sv(cpu *_cpu, cmd _cmd) {
+	if (DEBUG_PRINT)
+		printf("SV\n");
+	assert(_cmd.val1_type == T_VAL1_REG && "ILL exception: in SV first arg must be registry");
+	if(_cmd.val2_type != T_VAL2_REG && _cmd.val2_type != T_VAL2_U16)
+		assert(0 && "ILL exception: in SV second arg must be u16 or registry");
+	u16 addr = get_val1_from_cmd(_cpu, _cmd);
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	_cpu->ram.cells[addr] = val2;
 }
 
 void ins_dbg_print() { /* turn on/off INS printing */
@@ -783,6 +803,13 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			else if (status == 1)
 				_cpu->ip.ins++;
 			return 0;
+			break;
+
+		case LV_OPCODE:
+			ins_lv(_cpu, *_cmd);
+			break;
+		case SV_OPCODE:
+			ins_sv(_cpu, *_cmd);
 			break;
 	}
 			_cpu->ip.ins++;
