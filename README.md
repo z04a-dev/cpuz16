@@ -51,6 +51,10 @@ all of instructions receive three args:
 - #0016 lv <- load value from arg2(mem addr) to arg1(reg)
 - #0017 sv <- put value of arg2 to arg1(pointer to mem)
 
+***Mathematical ISA extension***
+- #0018 mul <- multiply val1 by val2
+- #0019 div <- divide val1 by val2
+
 ## code blocks
 every .asm requires start: entry point
 
