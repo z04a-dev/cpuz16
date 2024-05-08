@@ -32,3 +32,7 @@
 /* memory access ISA extension */
 #define LV_OPCODE 0x0016
 #define SV_OPCODE 0x0017
+
+/* math ISA extension */
+#define MUL_OPCODE 0x0018
+#define DIV_OPCODE 0x0019

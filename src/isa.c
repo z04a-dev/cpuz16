@@ -20,7 +20,7 @@ static instruction_set variadic_populate_ins(int count, ...) {
 }
 
 instruction_set init_isa() {
-	return variadic_populate_ins(24 /* <- DONT FORGET TO UPDATE */,
+	return variadic_populate_ins(26 /* <- DONT FORGET TO UPDATE */,
 					   CLITERAL(ins) {.opcode = NOP_OPCODE, .token = "nop"},
 					   CLITERAL(ins) {.opcode = MOV_OPCODE, .token = "mov"},
 
@@ -53,7 +53,10 @@ instruction_set init_isa() {
 					   CLITERAL(ins) {.opcode = JLE_OPCODE, .token = "jle",},
 					   /* memory access ISA extension */
 					   CLITERAL(ins) {.opcode = LV_OPCODE, .token = "lv",},
-					   CLITERAL(ins) {.opcode = SV_OPCODE, .token = "sv",});
+					   CLITERAL(ins) {.opcode = SV_OPCODE, .token = "sv",},
+					   /* math ISA extension */
+					   CLITERAL(ins) {.opcode = MUL_OPCODE, .token = "mul",},
+					   CLITERAL(ins) {.opcode = DIV_OPCODE, .token = "div",});
 
 }
 #endif

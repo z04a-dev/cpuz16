@@ -68,7 +68,7 @@ void reset_cpu_state(struct cpu *_cpu) {
 }
 
 void free_cpu(struct cpu *_cpu) {
-	printf("[CPUZ16] unloading stack memory\n");
+	printf("[CPUZ16] unloading RAM\n");
 	free(_cpu->ram.cells);
 	free(_cpu->isa.ins);
 }

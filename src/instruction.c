@@ -575,12 +575,6 @@ static void ins_halt(cpu *_cpu, ...) {
 
 // most important one!
 static void ins_mov(cpu *_cpu, cmd _cmd) {
-	// if (_cmd.val1_conv_addr) {
-	// 	u16 value = get_registry_value(_cpu, _cmd.val1.reg);
-	// 	_cmd.val1_type = T_VAL1_ADDRESS;
-	// 	// printf("VALUE %hu\n", value);
-	// 	_cmd.val1.num = value;
-	// }
 	if (_cmd.val1_type == T_VAL1_REG) {
 		if (DEBUG_PRINT) 
 			printf("MOV TO REG %s, %hu\n", reg_to_str(_cmd.val1.reg),
@@ -643,6 +637,36 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	assert(addr <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using sv instruction");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	_cpu->ram.cells[addr] = val2;
+}
+
+static void ins_mul(cpu *_cpu, cmd _cmd) {
+	if (DEBUG_PRINT)
+		printf("MUL\n");
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	u16 result = 0;
+	if (_cmd.val1_type == T_VAL1_ADDRESS) {
+		assert(_cmd.val1.num <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using mul instruction");
+		result = _cpu->ram.cells[_cmd.val1.num] * val2;
+		_cpu->ram.cells[_cmd.val1.num] = result;
+	} else {
+		result = get_registry_value(_cpu, _cmd.val1.reg) * val2;
+		put_value_in_reg(_cpu, _cmd.val1.reg, result);
+	}
+}
+
+static void ins_div(cpu *_cpu, cmd _cmd) {
+	if (DEBUG_PRINT)
+		printf("DIV\n");
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	u16 result = 0;
+	if (_cmd.val1_type == T_VAL1_ADDRESS) {
+		assert(_cmd.val1.num <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using div instruction");
+		result = _cpu->ram.cells[_cmd.val1.num] / val2;
+		_cpu->ram.cells[_cmd.val1.num] = result;
+	} else {
+		result = get_registry_value(_cpu, _cmd.val1.reg) / val2;
+		put_value_in_reg(_cpu, _cmd.val1.reg, result);
+	}
 }
 
 void ins_dbg_print() { /* turn on/off INS printing */
@@ -811,6 +835,21 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			break;
 		case SV_OPCODE:
 			ins_sv(_cpu, *_cmd);
+			break;
+
+		case MUL_OPCODE:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_MUL\n");
+				return -1;
+			}
+			ins_mul(_cpu, *_cmd);
+			break;
+		case DIV_OPCODE:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_DIV\n");
+				return -1;
+			}
+			ins_div(_cpu, *_cmd);
 			break;
 	}
 			_cpu->ip.ins++;

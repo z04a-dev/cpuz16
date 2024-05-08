@@ -179,6 +179,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 					_cmd->val1_type = T_VAL1_REG;
 					_cmd->val1.reg = reg; 
 				} else if (is_token_address(str)) {
+					str = &str[1];
 					_cmd->val1_type = T_VAL1_ADDRESS;
 					_cmd->val1.num = (u16)strtol(str, NULL, 16);
 				} else {
@@ -195,6 +196,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 					_cmd->val2_type = T_VAL2_REG;
 					_cmd->val2.reg = reg; 
 				} else if (is_token_address(str)) {
+					str = &str[1];
 					_cmd->val2_type = T_VAL2_ADDRESS;
 					_cmd->val2.num = (u16)strtol(str, NULL, 16);
 				} else {
@@ -221,6 +223,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 						_cmd->val3_type = T_VAL3_REG;
 						_cmd->val3.reg = reg; 
 					} else if (is_token_address(str)) {
+						str = &str[1];
 						_cmd->val3_type = T_VAL3_ADDRESS;
 						_cmd->val3.num = (u16)strtol(str, NULL, 16);
 					} else {
