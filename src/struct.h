@@ -93,5 +93,8 @@ typedef struct cpu {
 	u16 a1;
 	u16 a2;
 	u16 a3;
-	u16 ins;
+	/* IC is used only for printing debug info
+	* so there is nothing wrong about it being
+	* long long (64 bit)*/
+	unsigned long long ins;
 } cpu;

@@ -53,7 +53,7 @@ void print_cpu_state(struct cpu *_cpu) {
 	// TODO return pointer
 	// TODO free/max RAM/stack
 	// TODO RAM pointer
-	printf("Instruction counter: %hu\n\n", _cpu->ins);
+	printf("Instruction counter: %llu\n\n", _cpu->ins);
 }
 
 void reset_cpu_state(struct cpu *_cpu) {
