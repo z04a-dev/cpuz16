@@ -8,7 +8,7 @@
 - rdx (16 bit)
 - rbx (16 bit)
 - a1, a2, a3 (16 bit)
-- ins (16 bit) <- instruction counter
+- ins (64 bit) <- instruction counter (debugging purposes only)
 - stack (512 x 16 bit)
 - stack pointer (points to next available cell)
 - IP <- instruction pointer (what will be executed)
