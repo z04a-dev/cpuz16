@@ -1,7 +1,7 @@
-# imaginary assembly CPU (16 bit) by z04a 
+# imaginary assembly CPU (stack machine) (16 bit) by z04a 
 ***CPUZ16***
 
-## everything is unsigned!
+All registers are unsigned. Stack logic is unfinished.
 
 ## registers:
 - rax (16 bit)
