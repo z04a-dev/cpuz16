@@ -8,6 +8,7 @@
 #include "registry.h" 
 #include "lexer.h"
 
+#include "isa.h" /* includes struct.h */
 
 void usage_panic(char *argv[]) {
 	printf("err: provide path to ins.asm\n");
@@ -17,9 +18,15 @@ void usage_panic(char *argv[]) {
 
 // global variable Sadge
 cpu cpuz16;
+instruction_set isa;
+
+void free_isa() {
+	free(isa.ins);
+}
 
 void exit_func(void) {
 	free_cpu(&cpuz16);
+	free_isa();
 }
 
 int main(int argc, char *argv[]) {
@@ -27,11 +34,14 @@ int main(int argc, char *argv[]) {
 		usage_panic(argv);
 	}
 
-	cpuz16 = init_cpu();	
+	
+	isa = init_isa();
+	cpuz16 = init_cpu();
 
 	// print_cpu_state(&cpuz16);	
-	//
-	start_lexer(&cpuz16, argv[1]);
+
+	code_blocks code = {.capacity = -1};
+	start_lexer(&isa, argv[1], &code);
 
 	// print_code_blocks();
 
@@ -40,7 +50,7 @@ int main(int argc, char *argv[]) {
 	// that's cool!
 	atexit(exit_func);
 	
-	start_executing(&cpuz16);
+	start_interpreter(&cpuz16, &code);
 
 	// print_memory(&cpuz16);
 	

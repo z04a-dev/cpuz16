@@ -2,9 +2,11 @@
 #define u16 unsigned short
 #endif
 
+#define _STRUCT_IMPL
+
 #include <stdbool.h>
-#define STACK_SIZE 512
-#define RAM_SIZE 65535
+#define STACK_SIZE 256 
+#define RAM_SIZE 32767
 
 typedef struct instruction {
 	u16 opcode;
@@ -27,6 +29,8 @@ typedef enum REGISTRY {
 	REG_A3,
 	REG_INS,
 } REGISTRY;
+
+#define REGISTRY_COUNT 7
 
 typedef struct {
 	ins ins;
@@ -81,7 +85,6 @@ typedef struct {
 #define return_pointer instruction_pointer
 
 typedef struct cpu {
-	instruction_set isa;
 	ram ram;
 	instruction_pointer ip;
 	return_pointer rp;
@@ -96,5 +99,9 @@ typedef struct cpu {
 	/* IC is used only for printing debug info
 	* so there is nothing wrong about it being
 	* long long (64 bit)*/
+	// TODO
+	// Since i'm adding bytecode execution support, this registry will be used as PC,
+	// so i need to differentiate between debug IC (for interpreter), and PC (for bytecode)
+	// at runtime.
 	unsigned long long ins;
 } cpu;

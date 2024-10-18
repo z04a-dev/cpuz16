@@ -14,10 +14,10 @@
 #define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
 #define LEXER_DEBUG_STACK false // print out stack 
 
-#define REG_LEN 7
 // TODO i guess i dont need REG_INS here
 // maybe i do...
-char *REG_NAMES[REG_LEN] = {"rax",
+// MAYBE use it as PC when executing bytecode?
+char *REG_NAMES[REGISTRY_COUNT] = {"rax",
 	"rbx",
 	"rdx",
 	"a1",
@@ -25,17 +25,16 @@ char *REG_NAMES[REG_LEN] = {"rax",
 	"a3",
 	"ins"};
 
-code_blocks blocks = {.capacity = -1};
 
-void free_blocks() {
+void free_blocks(code_blocks *_blocks) {
 	printf("[VM] freeing blocks\n");
-	if (blocks.count != 0) {
-		for (u16 i = 0; i < blocks.count; ++i) {
-			if (blocks.block[i].ins.count != 0) {
-				free(blocks.block[i].ins.cmds);
+	if (_blocks->count != 0) {
+		for (u16 i = 0; i < _blocks->count; ++i) {
+			if (_blocks->block[i].ins.count != 0) {
+				free(_blocks->block[i].ins.cmds);
 			}
 		}
-		free(blocks.block);
+		free(_blocks->block);
 	}
 }
 
@@ -73,18 +72,19 @@ static bool is_comment(char *str) {
 	return false;
 } 
 
-static bool _recognize_ins(cpu *_cpu, cmd *_cmd, char *_token) {
-	assert(_cpu->isa.count > 0 && "initialize ISA first!");
-	for (unsigned int i = 0; i < _cpu->isa.count; ++i) {
-		if (strcmp(_token, _cpu->isa.ins[i].token) == 0) {
-			_cmd->ins = _cpu->isa.ins[i];
+static bool _recognize_ins(instruction_set *_isa, cmd *_cmd, char *_token) {
+	assert(_isa->count > 0 && "initialize ISA first!");
+	for (unsigned int i = 0; i < _isa->count; ++i) {
+		if (strcmp(_token, _isa->ins[i].token) == 0) {
+			_cmd->ins = _isa->ins[i];
 			return true;
 		}
 	}	
-	_cmd->ins = _cpu->isa.ins[0]; /* return nop */
+	_cmd->ins = _isa->ins[0]; /* return nop */
 	return false;
 }
 
+#ifdef VM_BUILD
 static void debug_print_cmd(cmd *_cmd) {
 	char *_v1;
 	if (_cmd->val1_type == T_VAL1_U16)
@@ -118,9 +118,10 @@ static void debug_print_cmd(cmd *_cmd) {
 
 	printf("[DEBUG] cmd: %s val1: %s val2: %s val3: %s", _cmd->ins.token, _v1, _v2, _v3);
 }
+#endif
 
 static bool is_token_registry(char *token,int *reg) {
-	for (int i = 0; i < REG_LEN; ++i)
+	for (int i = 0; i < REGISTRY_COUNT; ++i)
 		if (strcmp(token, REG_NAMES[i]) == 0) {
 			*reg = i;
 			return true;
@@ -138,14 +139,14 @@ static bool is_token_address(char *token) {
 	return false;
 }
 
-static void populate_code_blocks(code_block _block) {
-	if (blocks.count == 65535) {
+static void populate_code_blocks(code_block _block, code_blocks *out_blocks) {
+	if (out_blocks->count == 65535) {
 		printf("[PANIC] too much code blocks (must be less than 65535)");
 		exit(1);
 	}
-	blocks.count++;
-	blocks.block = realloc(blocks.block, blocks.count * sizeof(code_block));
-	blocks.block[blocks.count - 1] = _block;
+	out_blocks->count++;
+	out_blocks->block = realloc(out_blocks->block, out_blocks->count * sizeof(code_block));
+	out_blocks->block[out_blocks->count - 1] = _block;
 }
 
 static void clear_token(char *_token) {
@@ -236,7 +237,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 	}
 }
 
-static cmd _tokenize_str(cpu *_cpu, char *str) {
+static cmd _tokenize_str(instruction_set *_isa, char *str) {
 	char *DEBUG_STR;
 	asprintf(&DEBUG_STR, "%s", str);
 
@@ -249,7 +250,7 @@ static cmd _tokenize_str(cpu *_cpu, char *str) {
 		// printf("TOKEN AFTER CLEARING: %s\n", token);
 		switch (pos) {
 			case 0: /* ins */ 
-				assert(_recognize_ins(_cpu, &_cmd, token) && "Illegal instruction");
+				assert(_recognize_ins(_isa, &_cmd, token) && "Illegal instruction");
 				break;
 			case 1: /* val1 */
 				_recognize_value(token, &_cmd, 1);
@@ -273,17 +274,19 @@ static cmd _tokenize_str(cpu *_cpu, char *str) {
 	// 	assert(0 && "you can't provide no arguments to instructions other than nop and halt");
 	// }
 
+#ifdef VM_BUILD
 	if (LEXER_DEBUG_FILE) {
 		printf("line: %s ", DEBUG_STR);
 		debug_print_cmd(&_cmd);
 		// printf("\n");
 		printf(" || OPCODE: %s 0x%04x\n", _cmd.ins.token, _cmd.ins.opcode);
 	}
+#endif
 	free(DEBUG_STR);
 	return _cmd;
 }
 
-static bool process_str(cpu *_cpu, char *str, code_block *block) {
+static bool process_str(instruction_set *_isa, char *str, code_block *block) {
 	char *end_ptr = strrchr(str, '\n');
 	if (end_ptr != NULL) {
 		*end_ptr = '\0';
@@ -295,29 +298,29 @@ static bool process_str(cpu *_cpu, char *str, code_block *block) {
 		return true;
 	if (LEXER_DEBUG_FILE)
 		printf("[%d] ", block->ins.count);
-	cmd _cmd = _tokenize_str(_cpu, str);
+	cmd _cmd = _tokenize_str(_isa, str);
 	if (_cmd.ins.opcode == END_OPCODE)
 		return false;
 	add_ins_to_pool(&block->ins, _cmd);
 	return true;
 }
 
-static bool check_for_start() {
-	for (u16 i = 0; i < blocks.count; ++i) {
-		if (strcmp(blocks.block[i].label, "start") == 0) {
+static bool check_for_start(code_blocks *_blocks) {
+	for (u16 i = 0; i < _blocks->count; ++i) {
+		if (strcmp(_blocks->block[i].label, "start") == 0) {
 			// append HALT if it's not already present
 			// maybe we don't need it?....
 			// TODO
 			bool halt_presence = false;
-			for (u16 j = 0; j < blocks.block[i].ins.count; ++j) {
-				if (blocks.block[i].ins.cmds[j].ins.opcode == HALT_OPCODE) {
+			for (u16 j = 0; j < _blocks->block[i].ins.count; ++j) {
+				if (_blocks->block[i].ins.cmds[j].ins.opcode == HALT_OPCODE) {
 					halt_presence = !halt_presence;
 					break;
 				}
 			}
 			if (!halt_presence) {
 				cmd _haltcmd = {.ins.opcode = HALT_OPCODE, .ins.token = "halt"};
-				add_ins_to_pool(&blocks.block[i].ins, _haltcmd);
+				add_ins_to_pool(&_blocks->block[i].ins, _haltcmd);
 			}
 				
 			return true;
@@ -326,7 +329,7 @@ static bool check_for_start() {
 	return false;
 }
 
-void start_lexer(cpu *_cpu, char *asm_file) {
+void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks) {
 	if (access(asm_file, F_OK) != 0)
 		assert(0 && ".asm file does not exist");
 	printf("[Lexer] starting lexer at %s\n", asm_file);
@@ -355,8 +358,8 @@ void start_lexer(cpu *_cpu, char *asm_file) {
 				eof = true;
 				break;
 			}
-		} while (process_str(_cpu, line, &block));
-		populate_code_blocks(block);
+		} while (process_str(_isa, line, &block));
+		populate_code_blocks(block, out_blocks);
 		if (LEXER_DEBUG_FILE)
 			printf("--- %s ---\n", block.label);
 		if(t_line != NULL)
@@ -366,19 +369,22 @@ void start_lexer(cpu *_cpu, char *asm_file) {
 			break;
 	}
 	fclose(asm_f);
-	if (!check_for_start()) {
+	if (!check_for_start(out_blocks)) {
 		printf("[PANIC] .start label is not found\n");
-		free_blocks();
+		// TODO:
+		// since i've reworked blocks architecture, it's not possible to free_blocks here
+		// without stack smashing, Sadge
+		// free_blocks(block);
 		exit(1);
 	}
 }
 
-void print_code_blocks() {
-	printf("code block count: %hu\n", blocks.count);
-	for (u16 i = 0; i < blocks.count; ++i) {
-		printf("block[%hu] %s\n", i, blocks.block[i].label);
-		for (u16 j = 0; j < blocks.block[i].ins.count; ++j) {
-			printf("INS[%hu] %s\n", j, blocks.block[i].ins.cmds[j].ins.token);
+void print_code_blocks(code_blocks *_blocks) {
+	printf("code block count: %hu\n", _blocks->count);
+	for (u16 i = 0; i < _blocks->count; ++i) {
+		printf("block[%hu] %s\n", i, _blocks->block[i].label);
+		for (u16 j = 0; j < _blocks->block[i].ins.count; ++j) {
+			printf("INS[%hu] %s\n", j, _blocks->block[i].ins.cmds[j].ins.token);
 		}
 		printf("\n");
 	}
@@ -405,21 +411,23 @@ void print_code_blocks() {
 // 	printf("Total instruction count: %hu\n", ins_pool.count);
 // }
 
-void start_executing(cpu *_cpu) {
-	assert(blocks.count != 0 && "No code blocks provided");	
+#ifdef VM_BUILD
+void start_interpreter(cpu *_cpu, code_blocks *_blocks) {
+	assert(_blocks->count != 0 && "No code blocks provided");	
 	if (LEXER_DEBUG_INSTRUCTIONS)
 		ins_dbg_print();
-	for (u16 i = 0; i < blocks.count; ++i) {
-		if (strcmp(blocks.block[i].label, "start") == 0) {
-			_cpu->ip.block = &blocks.block[i];
+	for (u16 i = 0; i < _blocks->count; ++i) {
+		if (strcmp(_blocks->block[i].label, "start") == 0) {
+			_cpu->ip.block = &_blocks->block[i];
 			_cpu->ip.ins = 0;
-			if (execute_code(_cpu, &blocks) == -1)
+			if (execute_interpreter(_cpu, _blocks) == -1)
 				printf("[PANIC] HALTING\n");
 			break;
 		}
 	}
-	free_blocks();
+	free_blocks(_blocks);
 	if (LEXER_DEBUG_STACK)
 		print_stack(_cpu);
 }
+#endif
 #endif

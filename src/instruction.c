@@ -623,6 +623,8 @@ static void ins_lv(cpu *_cpu, cmd _cmd) {
 		printf("LV\n");
 	assert(_cmd.val1_type == T_VAL1_REG && "ILL exception: in LV first arg must be registry");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	// TODO
+	// ins_lv should be allowed for use on stack
 	assert(val2 <= RAM_SIZE-STACK_SIZE && "Segmentation fault: you can't access stack using lv instruction");
 	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->ram.cells[val2]);
 }
@@ -852,11 +854,11 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			ins_div(_cpu, *_cmd);
 			break;
 	}
-			_cpu->ip.ins++;
+	_cpu->ip.ins++;
 	return 0;
 }
 
-int execute_code(cpu *_cpu, code_blocks *_code_blocks) {
+int execute_interpreter(cpu *_cpu, code_blocks *_code_blocks) {
 	while (execute_instruction(_cpu, &_cpu->ip.block->ins.cmds[_cpu->ip.ins], _code_blocks) != -1 && 
 			_cpu->ip.ins < _cpu->ip.block->ins.count) {
 		ins_inc(_cpu, REG_INS); /* instruction counter + 1 */

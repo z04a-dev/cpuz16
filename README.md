@@ -15,7 +15,7 @@ All registers are unsigned. Stack logic is unfinished.
 - RP <- return pointer (points to jmp+1 in caller function)
 
 ## RAM
-RAM size is 65535 bytes, at the end of which 512 bytes are allocated to stack
+RAM size is 65535 bytes (32767 16 bit cells), at the end of which 512 bytes (256 16 bit cells) are allocated to stack
 
 ## instructions
 - #0000 nop <- do nothing
