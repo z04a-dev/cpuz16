@@ -16,6 +16,10 @@
 #include <stdbool.h>
 #include "arch.h"
 
+#ifdef VM_BUILD
+#include "util/to_str.h"
+#endif
+
 #define LEXER_DEBUG_FILE false // debug at parsing
 #define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
 #define LEXER_DEBUG_STACK false // print out stack 

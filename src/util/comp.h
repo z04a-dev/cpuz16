@@ -1,19 +1,9 @@
-#ifndef _UTIL_COMPILER_
-#define _UTIL_COMPILER_
+#ifndef _UTIL_COMPILER
+#define _UTIL_COMPILER
 
-#define NUM_CELLS 32768 /* there is 32768 cells of 16 bit values in 64 KiB */
-#define MAGIC_SIZE 1 /* 1 magic cell would be enough */
-/* there is no support for MAGIC sizes > 1 */
-
-#define TOTAL_CELLS NUM_CELLS+MAGIC_SIZE
-
-#define MAX_ROM_SIZE 65536 /* CPUZ16 can't load more than 64 KiB of memory */
-
-#define MAGIC_VALUE 0xFF3A
-
-#define BYTECODE_START MAGIC_SIZE /* code will start at array[MAGIC_SIZE], which will put it right after magic */
-
-#define SWAP_ENDIANNESS false 
+#ifndef _UTIL_COMPILER_VALUES
+#include "comp-values.h"
+#endif
 
 #include "stdio.h"
 
@@ -21,7 +11,13 @@
 #include "../struct.h"
 #endif
 
+
+#include <stdlib.h>
+#include <stdio.h>
+
+
 #define PRINT_AS_BINARY true 
+#define READ_BINARY false
 
 void print_byte_array(u16 *array, u16 start, u16 end) {
 	u16 *p = &array[start];
@@ -38,5 +34,30 @@ void print_byte_array(u16 *array, u16 start, u16 end) {
 
 	}
 	printf("\n");
+}
+
+bool check_array_size(unsigned int byte_array_size) {
+	if (byte_array_size - (MAGIC_SIZE * sizeof(u16)) > MAX_ROM_SIZE) {
+		printf("PANIC: Size of byte array exceeds %d, that's not valid!\n", MAX_ROM_SIZE);
+		printf("PANIC: Size of byte array is %d, which is greater than MAX_ROM_SIZE: %d\n", 
+				(int)(byte_array_size - (MAGIC_SIZE * sizeof(u16))), MAX_ROM_SIZE);
+		printf("PANIC: Did you change NUM_CELLS to something huge?\n");
+		return false;
+	} else {
+		return true;
+	}
+} 
+
+void byte_array_magic(u16 *array) {
+	printf("Putting magic into array...\n");
+	array[0] = MAGIC_VALUE;
+}
+
+
+void destroy_byte_array(u16 *array) {
+	printf("Destroying byte array...\n");
+	// TODO
+	// Check if array was actually allocated, or it will segfault!
+	free(array);
 }
 #endif

@@ -36,24 +36,7 @@ struct compile_bytecode {
 /* I've implemented check for byte array size, but please -> do not change it!*/
 /* But it also may change it the future, so keeping it for now */
 
-#define READ_BINARY false
-
-bool check_array_size(unsigned int byte_array_size) {
-	if (byte_array_size - (MAGIC_SIZE * sizeof(u16)) > MAX_ROM_SIZE) {
-		printf("PANIC: Size of byte array exceeds %d, that's not valid!\n", MAX_ROM_SIZE);
-		printf("PANIC: Size of byte array is %d, which is greater than MAX_ROM_SIZE: %d\n", 
-				(int)(byte_array_size - (MAGIC_SIZE * sizeof(u16))), MAX_ROM_SIZE);
-		printf("PANIC: Did you change NUM_CELLS to something huge?\n");
-		return false;
-	} else {
-		return true;
-	}
-} 
-
-void byte_array_magic(u16 *array) {
-	printf("Putting magic into array...\n");
-	array[0] = MAGIC_VALUE;
-}
+#define READ_BINARY false 
 
 u16 *create_byte_array() {
 	unsigned int byte_array_size = (TOTAL_CELLS) * sizeof(u16);
@@ -76,18 +59,9 @@ u16 *create_byte_array() {
 	return array;
 }
 
-void destroy_byte_array(u16 *array) {
-	printf("Destroying byte array...\n");
-	// TODO
-	// Check if array was actually allocated, or it will segfault!
-	free(array);
-}
-
-bool create_binary(u16 *array) {
-	char *filename = "output.bin";
+bool create_binary(u16 *array, char *filename) {
 	FILE *fp;
 	fp = fopen(filename, "wb+");
-
 
 	u16 *p = array;
 	for (; p < &array[TOTAL_CELLS]; ++p) {
@@ -158,26 +132,17 @@ void append_fix(struct compile_bytecode *compiler, u16 fix_ptr, char *label) {
 }
 
 void append_value(u16 *bytecell, u16 value, u16 offset, u16 length) {
-	// printf("APPENDING VALUE : %d\n", value);
 	u16 value_mask = ((1<<length)-1) << offset; // for length=4 and offset=3 will be 00..01111000
 	*bytecell = *bytecell & ~value_mask; // zeroing according bits inside the bytecell
 	*bytecell = *bytecell | ((value << offset) & value_mask); // AND with value_mask is for extra safety
 }
 
 void append_bytearray(struct compile_bytecode *compiler, code_block block, u16 *start_pointer) {
-	// printf("APPENDING %s at %d\n", block.label, *start_pointer);
-	// TODO
-	// add start_pointer of each block to some array
-	// so it can be used in fixes for jumps
 	for (size_t i = 0; i < block.ins.count; ++i) {
-		// printf("Putting: %s\n", block.ins.cmds[i].ins.token);
 		compiler->bytecode[*start_pointer] = block.ins.cmds[i].ins.opcode; //appending opcode
 		
 		u16 hint_count = 0;
 
-		// if (block.ins.cmds[i].val2_type == T_VAL2_NULL) {
-		// 	printf("%s -> NULL TYPE\n", block.ins.cmds[i].ins.token);
-		// }
 		// appending VAL1
 		if (block.ins.cmds[i].val1_type == T_VAL1_REG) {
 			append_value(&compiler->bytecode[*start_pointer], block.ins.cmds[i].val1.reg, 5, 3);
@@ -187,11 +152,9 @@ void append_bytearray(struct compile_bytecode *compiler, code_block block, u16 *
 				append_value(&compiler->bytecode[*start_pointer], HINT_FLAG, 5, 3);
 				hint_count++;
 				if (block.ins.cmds[i].val1_type == T_VAL1_U16) {
-					// printf("Putting u16 %d\n", block.ins.cmds[i].val1.num);
 					compiler->bytecode[*start_pointer + hint_count] = block.ins.cmds[i].val1.num;
 				}
 				else if (block.ins.cmds[i].val1_type == T_VAL1_LABEL)
-					// compiler->bytecode[*start_pointer + hint_count] = 0xFFFF;
 					append_fix(compiler, *start_pointer + hint_count, block.ins.cmds[i].val1.label);
 				else if (block.ins.cmds[i].val1_type == T_VAL1_ADDRESS) {
 					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
@@ -270,7 +233,10 @@ void fix_bytecode(struct compile_bytecode *compiler) {
 		for (int label = 0; label < compiler->labels_count; ++label) {
 			if (strcmp(fix_label, compiler->labels[label].label) == 0) {
 				printf("Found fix, applying...\n");
-				compiler->bytecode[compiler->fixes[fix].fix_ptr] = compiler->labels[label].start_ptr;
+
+				// Decrement MAGIC_SIZE at compile time
+				// so interpreters could just drop MAGIC from their bytecode copy
+				compiler->bytecode[compiler->fixes[fix].fix_ptr] = compiler->labels[label].start_ptr - MAGIC_SIZE;
 				break;
 			}
 			if (label == compiler->labels_count - 1) {
@@ -297,22 +263,28 @@ int main(int argc, char **argv) {
 	// TODO
 	// Check for valid file, don't segfault!
 	char *file = argv[1];
-	// printf("ERROR: COMPILER IS NOT FINISHED. EXITING...\n");
-	// return(1);
 
 	if (READ_BINARY) {
 		read_binary(file);
 		return 0;
 	}
 
+	FILE *fp_check = fopen(file, "r");
+	u16 fp_check_val;
+	fread(&fp_check_val, sizeof(u16), 1, fp_check);
+	fclose(fp_check);
+	if (fp_check_val == MAGIC_VALUE) {
+		printf("[ERROR] Found MAGIC, are you sure that you provided .asm file?\n");
+		exit(1);
+	}
+
 	struct compile_bytecode compiler = {0};
 	compiler.bytecode = create_byte_array();
-
 
 	instruction_set isa = init_isa();
 
 	code_blocks code = {.capacity = -1};
-	start_lexer(&isa, argv[1], &code);
+	start_lexer(&isa, file, &code);
 	// there is no need to check for .start label
 	// because lexer will do it for us and panic
 
@@ -323,12 +295,9 @@ int main(int argc, char **argv) {
 
 	for (size_t i = 0 ; i < code.count; ++i) {
 		if (strcmp(code.block[i].label, "start") != 0) {
-			// printf("Code block %zu:\n", i);
-			// printf("Name: %s\n", code.block[i].label);
 			u16 start = bytecode_ptr;
 			append_bytearray(&compiler, code.block[i], &bytecode_ptr);
 			append_label(&compiler, code.block[i], start);
-			// printf("\n");
 			continue;
 		}
 	}
@@ -342,12 +311,6 @@ int main(int argc, char **argv) {
 	}
 
 	printf("start pointer %d\n", bytecode_ptr);
-
-	/* REMOVE: This is just for testing binary */
-
-	// bytecode[BYTECODE_START] = 0x1717;
-
-	/* REMOVE to here */
 
 	print_byte_array(compiler.bytecode, 0, bytecode_ptr + 1);
 
@@ -366,8 +329,12 @@ int main(int argc, char **argv) {
 	fix_bytecode(&compiler);
 
 	print_byte_array(compiler.bytecode, 0, bytecode_ptr + 1);
-	// printf("Creating binary...\n");
-	// create_binary(bytecode);
+
+	printf("Successfully compiled...\n");
+	// TODO FIX
+	printf("Saving binary...\n");
+	create_binary(compiler.bytecode, "output.bin");
+
 	goto clean;
 
 clean:

@@ -20,7 +20,6 @@ typedef struct instruction_set {
 
 #define CLITERAL(type) (type) /* yoinked from raylib */
 
-
 #define REGISTRY_COUNT 7
 
 typedef struct {
@@ -75,10 +74,16 @@ typedef struct {
 
 #define return_pointer instruction_pointer
 
+typedef enum {
+	VM_BINARY,
+	VM_INTERPRETER
+} state;
+
 typedef struct cpu {
+	state state;
 	ram ram;
-	instruction_pointer ip;
-	return_pointer rp;
+	instruction_pointer ip; // for interpreting .asm
+	return_pointer rp; // for interpreting .asm
 	u16 *stack_value;
 	u16 *stack_pointer;
 	u16 rax;
@@ -87,12 +92,14 @@ typedef struct cpu {
 	u16 a1;
 	u16 a2;
 	u16 a3;
-	/* IC is used only for printing debug info
-	* so there is nothing wrong about it being
-	* long long (64 bit)*/
 	// TODO
 	// Since i'm adding bytecode execution support, this registry will be used as PC,
 	// so i need to differentiate between debug IC (for interpreter), and PC (for bytecode)
 	// at runtime.
-	unsigned long long ins;
+	u16 ins;
+
+	/* IC is used only for printing debug info
+	* so there is nothing wrong about it being
+	* long long (64 bit)*/
+	unsigned long long ic;
 } cpu;

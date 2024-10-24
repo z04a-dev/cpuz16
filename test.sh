@@ -23,6 +23,20 @@ else
 			./build/z16 $file 
 		done
 	fi
+	
+	echo "Tested INTERPRETER mode, now testing compiler..."
+	
+	echo "Compiling deepjump.asm"
+	./build/z16c ./tests/deepjump.asm
+	echo ""
+	echo "Testing compiled binary"
+	./build/z16 ./output.bin
+	echo "---------------------"
+	echo "Compiling sorting.asm"
+	./build/z16c tests/sorting.asm
+	echo ""
+	echo "Testing compiled binary"
+	./build/z16 ./output.bin
 fi
 
 

@@ -48,11 +48,12 @@ void print_cpu_state(struct cpu *_cpu) {
 	printf("a1 : %5hu (0x%04x)\n", _cpu->a1 , _cpu->a1);
 	printf("a2 : %5hu (0x%04x)\n", _cpu->a2 , _cpu->a2);
 	printf("a3 : %5hu (0x%04x)\n", _cpu->a3 , _cpu->a3);
+	printf("ins: %5hu (0x%04x)\n", _cpu->ins , _cpu->ins);
 	printf("Stack pointer: %p\n", (void*)_cpu->stack_pointer);
 	// TODO return pointer
 	// TODO free/max RAM/stack
 	// TODO RAM pointer
-	printf("Instruction counter: %llu\n\n", _cpu->ins);
+	printf("Instruction counter: %llu\n\n", _cpu->ic);
 }
 
 void reset_cpu_state(struct cpu *_cpu) {

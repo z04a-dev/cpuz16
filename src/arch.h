@@ -1,5 +1,5 @@
 /* registry */
-
+#define _ARCH_IMPL
 
 #define RAX_REGISTRY 0x00 // 0b000
 #define RBX_REGISTRY 0x01 // 0b001
