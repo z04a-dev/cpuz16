@@ -1,10 +1,8 @@
 ;; This is a test program for deep subroutine jump logic
-;; Currently not working, because call doesn't push RP to stack
-;; Also i don't think it would be possible to implement it in interpreter.
+;; Only works in binary mode
 start:
-;; fix -> i've changed first two inc from rax to smth different for testing
-	inc a3;
-	inc rbx;
+	inc rax;
+	inc rax;
 	mov rbx, 50;
 	call first;	
 	halt;
