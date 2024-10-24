@@ -1,4 +1,10 @@
+#ifdef VM_BUILD
 #include "instruction.h"
+#endif
+
+#ifndef _STRUCT_IMPL
+#include "struct.h"
+#endif
 
 #ifndef _LEXER_IMPL_
 #define _LEXER_IMPL_
@@ -8,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "opcodes.h"
+#include "arch.h"
 
 #define LEXER_DEBUG_FILE false // debug at parsing
 #define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
@@ -164,8 +170,8 @@ static void clear_token(char *_token) {
 static void _recognize_value(char *str, cmd *_cmd, int arg) {
 	if (_cmd->ins.opcode == JMP_OPCODE || _cmd->ins.opcode == CALL_OPCODE) {
 				_cmd->val1_type = T_VAL1_LABEL;
-				_cmd->val2_type = T_VAL2_LABEL;
-				_cmd->val3_type = T_VAL3_LABEL;
+				_cmd->val2_type = T_VAL2_NULL;
+				_cmd->val3_type = T_VAL3_NULL;
 				asprintf(&_cmd->val1.label, "%s", str);
 	} else {
 		int reg = 0;
@@ -176,7 +182,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				// 	str = &str[1];
 				// }
 				if (is_token_registry(str, &reg)) {
-					assert(!(_cmd->ins.opcode == INC_OPCODE && reg == REG_INS) && "You can't increment IC manually.");
+					assert(!(_cmd->ins.opcode == INC_OPCODE && reg == INS_REGISTRY) && "You can't increment IC manually.");
 					_cmd->val1_type = T_VAL1_REG;
 					_cmd->val1.reg = reg; 
 				} else if (is_token_address(str)) {

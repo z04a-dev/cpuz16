@@ -2,8 +2,9 @@
 ;; Currently not working, because call doesn't push RP to stack
 ;; Also i don't think it would be possible to implement it in interpreter.
 start:
-	inc rax;
-	inc rax;
+;; fix -> i've changed first two inc from rax to smth different for testing
+	inc a3;
+	inc rbx;
 	mov rbx, 50;
 	call first;	
 	halt;

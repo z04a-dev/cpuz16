@@ -7,29 +7,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+
+#include "lexer.h"
+#include "isa.h"
+
+#include "util/comp.h"
+#include "arch.h"
 
 /* I've implemented check for byte array size, but please -> do not change it!*/
 /* But it also may change it the future, so keeping it for now */
 
-#define NUM_CELLS 32768 /* there is 32768 cells of 16 bit values in 64 KiB */
-#define MAGIC_SIZE 1 /* 1 magic cell would be enough */
-/* there is no support for MAGIC sizes > 1 */
-
-#define TOTAL_CELLS NUM_CELLS+MAGIC_SIZE
-
-#define MAX_ROM_SIZE 65536 /* CPUZ16 can't load more than 64 KiB of memory */
-
-#define MAGIC_VALUE 0xFF3A
-
-#define BYTECODE_START MAGIC_SIZE /* code will start at array[MAGIC_SIZE], which will put it right after magic */
-
-#define SWAP_ENDIANNESS false 
-
-#define READ_BINARY true 
-
-/* Final size of 32768 + 1 array must be 65538 */
-
-typedef unsigned short u16;
+#define READ_BINARY false
 
 bool check_array_size(unsigned int byte_array_size) {
 	if (byte_array_size - (MAGIC_SIZE * sizeof(u16)) > MAX_ROM_SIZE) {
@@ -77,15 +66,6 @@ void destroy_byte_array(u16 *array) {
 }
 
 
-void print_byte_array(u16 *array, u16 start, u16 end) {
-	u16 *p = &array[start];
-	for (int count = start; p < &array[end]; ++p, ++count) {
-		if (count == 0 || count % 4 == 0)
-			printf("\n%05d ... %05d: ", count+1, count + 4);
-		printf("0x%04X ", *p);
-	}
-	printf("\n");
-}
 
 bool create_binary(u16 *array) {
 	char *filename = "output.bin";
@@ -108,12 +88,11 @@ bool create_binary(u16 *array) {
 	return true;
 }
 
-void read_binary() {
-	char *filename = "output.bin";
+void read_binary(char *file) {
 	FILE *fp;
-	fp = fopen(filename, "r");
+	fp = fopen(file, "r");
 	if (fp == NULL) {
-		printf("PANIC: Failed to open <%s>...\n", filename);
+		printf("PANIC: Failed to open <%s>...\n", file);
 		exit(1);
 	}
 	u16 *array = create_byte_array();
@@ -127,31 +106,169 @@ void read_binary() {
 	destroy_byte_array(array);
 }
 
-int main(void) {
 
+void usage_panic(char *argv[]) {
+	printf("err: provide path to ins.asm\n");
+	printf("usage: %s <path/to/ins.asm>\n", argv[0]);
+	exit(1);
+}
+
+void append_value(u16 *bytecell, u16 value, u16 offset, u16 length) {
+	// printf("APPENDING VALUE : %d\n", value);
+	u16 value_mask = ((1<<length)-1) << offset; // for length=4 and offset=3 will be 00..01111000
+	*bytecell = *bytecell & ~value_mask; // zeroing according bits inside the bytecell
+	*bytecell = *bytecell | ((value << offset) & value_mask); // AND with value_mask is for extra safety
+}
+
+void append_bytearray(u16 *bytecode, code_block block, u16 *start_pointer) {
+	// printf("APPENDING %s at %d\n", block.label, *start_pointer);
+	// TODO
+	// add start_pointer of each block to some array
+	// so it can be used in fixes for jumps
+	for (size_t i = 0; i < block.ins.count; ++i) {
+		// printf("Putting: %s\n", block.ins.cmds[i].ins.token);
+		bytecode[*start_pointer] = block.ins.cmds[i].ins.opcode; //appending opcode
+		
+		u16 hint_count = 0;
+
+		if (block.ins.cmds[i].val2_type == T_VAL2_NULL) {
+			printf("%s -> NULL TYPE\n", block.ins.cmds[i].ins.token);
+		}
+		// appending VAL1
+		if (block.ins.cmds[i].val1_type == T_VAL1_REG) {
+			append_value(&bytecode[*start_pointer], block.ins.cmds[i].val1.reg, 5, 3);
+		} else {
+			// put HINT
+			if (block.ins.cmds[i].ins.opcode != HALT_OPCODE && block.ins.cmds[i].val1_type != T_VAL1_NULL ) {
+				append_value(&bytecode[*start_pointer], HINT_FLAG, 5, 3);
+				hint_count++;
+				if (block.ins.cmds[i].val1_type == T_VAL1_U16) {
+					printf("Putting u16 %d\n", block.ins.cmds[i].val1.num);
+					bytecode[*start_pointer + hint_count] = block.ins.cmds[i].val1.num;
+				}
+				else if (block.ins.cmds[i].val1_type == T_VAL1_LABEL)
+					bytecode[*start_pointer + hint_count] = 0xFFFF;
+				else if (block.ins.cmds[i].val1_type == T_VAL1_ADDRESS) {
+					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
+					bytecode[*start_pointer + hint_count] = 0xFFFF;
+				}
+			}
+		}
+
+		// Appending VAL2
+		if (block.ins.cmds[i].val2_type == T_VAL2_REG) {
+			append_value(&bytecode[*start_pointer], block.ins.cmds[i].val2.reg, 8, 3);
+		} else {
+			// put HINT
+			if (block.ins.cmds[i].ins.opcode != HALT_OPCODE && block.ins.cmds[i].val2_type != T_VAL2_NULL) {
+				append_value(&bytecode[*start_pointer], HINT_FLAG, 8, 3);
+				hint_count++;
+				if (block.ins.cmds[i].val2_type == T_VAL2_U16) {
+					printf("Putting u16 %d\n", block.ins.cmds[i].val2.num);
+					bytecode[*start_pointer + hint_count] = block.ins.cmds[i].val2.num;
+				}
+				else if (block.ins.cmds[i].val2_type == T_VAL2_LABEL)
+					bytecode[*start_pointer + hint_count] = 0xFFFF;
+				else if (block.ins.cmds[i].val2_type == T_VAL2_ADDRESS) {
+					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
+					bytecode[*start_pointer + hint_count] = 0xFFFF;
+				}
+			}
+		}
+
+		// TODO
+		// VAL3 always is label, so no need to check for everything else
+		// because it's always used in conditional jumps
+		// Appending VAL3
+		if (block.ins.cmds[i].val3_type == T_VAL3_REG) {
+			append_value(&bytecode[*start_pointer], block.ins.cmds[i].val3.reg, 11, 3);
+		} else {
+			// put HINT
+			if (block.ins.cmds[i].ins.opcode != HALT_OPCODE && block.ins.cmds[i].val3_type != T_VAL3_NULL) {
+				append_value(&bytecode[*start_pointer], HINT_FLAG, 11, 3);
+				hint_count++;
+				if (block.ins.cmds[i].val3_type == T_VAL3_U16) {
+					printf("Putting u16 %d\n", block.ins.cmds[i].val3.num);
+					bytecode[*start_pointer + hint_count] = block.ins.cmds[i].val3.num;
+				}
+				else if (block.ins.cmds[i].val3_type == T_VAL3_LABEL)
+					bytecode[*start_pointer + hint_count] = 0xFFFF;
+				else if (block.ins.cmds[i].val3_type == T_VAL3_ADDRESS) {
+					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
+					bytecode[*start_pointer + hint_count] = 0xFFFF;
+				}
+			}
+		}
+		// moving pointer to next cell
+		*start_pointer += hint_count + 1;
+	}
+}
+
+void find_start(u16 *bytecode, code_blocks *blocks, u16 *start_pointer) {
+	for (size_t i = 0 ; i < blocks->count; ++i) {
+		if (strcmp(blocks->block[i].label, "start") == 0) {
+			append_bytearray(bytecode, blocks->block[i], start_pointer);
+		} else continue;
+	}
+}
+
+int main(int argc, char **argv) {
+	if (argc == 1) {
+		usage_panic(argv);
+	}
+	// TODO
+	// Check for valid file, don't segfault!
+	char *file = argv[1];
 	printf("ERROR: COMPILER IS NOT FINISHED. EXITING...\n");
-	return(1);
+	// return(1);
 
 	if (READ_BINARY) {
-		read_binary();
+		read_binary(file);
 		return 0;
 	}
 
 	u16 *bytecode = create_byte_array();
 
+
+	instruction_set isa = init_isa();
+
+	code_blocks code = {.capacity = -1};
+	start_lexer(&isa, argv[1], &code);
+	// there is no need to check for .start label
+	// because lexer will do it for us and panic
+
+	printf("Code blocks: %d\n", code.count);
+
+	u16 bytecode_ptr = BYTECODE_START;
+	find_start(bytecode, &code, &bytecode_ptr);
+
+	for (size_t i = 0 ; i < code.count; ++i) {
+		if (strcmp(code.block[i].label, "start") != 0) {
+			// printf("Code block %zu:\n", i);
+			// printf("Name: %s\n", code.block[i].label);
+			append_bytearray(bytecode, code.block[i], &bytecode_ptr);
+			printf("\n");
+			continue;
+		}
+	}
+
+	printf("start pointer %d\n", bytecode_ptr);
+
 	/* REMOVE: This is just for testing binary */
 
-	bytecode[BYTECODE_START] = 0x1717;
+	// bytecode[BYTECODE_START] = 0x1717;
 
 	/* REMOVE to here */
 
-	print_byte_array(bytecode, 0, 6);
+	print_byte_array(bytecode, 0, 62);
 
-	printf("Creating binary...\n");
-	create_binary(bytecode);
+	// printf("Creating binary...\n");
+	// create_binary(bytecode);
 	goto clean;
 
 clean:
+	// TODO (check if ISA was correctly initialized)
+	free(isa.ins);
 	destroy_byte_array(bytecode);
 	return 0;
 }

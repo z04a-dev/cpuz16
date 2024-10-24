@@ -5,7 +5,7 @@
 #ifndef _INS_IMPL_
 #define _INS_IMPL_
 #include "struct.h"
-#include "opcodes.h"
+#include "arch.h"
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -14,47 +14,47 @@ int DEBUG_PRINT = 0;
 
 int execute_code(cpu *_cpu, code_blocks *_code_blocks);
 
-u16 get_registry_value(cpu *_cpu, enum REGISTRY reg) {
+u16 get_registry_value(cpu *_cpu, u16 reg) {
 	switch (reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			return _cpu->rax;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			return _cpu->rbx;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			return _cpu->rdx;
-		case REG_A1:
+		case A1_REGISTRY:
 			return _cpu->a1;
-		case REG_A2:
+		case A2_REGISTRY:
 			return _cpu->a2;
-		case REG_A3:
+		case A3_REGISTRY:
 			return _cpu->a3;
-		case REG_INS:
+		case INS_REGISTRY:
 			return _cpu->ins;
 	}
 	return 0;
 }
 
-static void put_value_in_reg(cpu *_cpu, enum REGISTRY reg, u16 value) {
+static void put_value_in_reg(cpu *_cpu, u16 reg, u16 value) {
 	switch (reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			_cpu->rax = value;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			_cpu->rbx = value;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			_cpu->rdx = value;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			_cpu->a1 = value;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			_cpu->a2 = value;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			_cpu->a3 = value;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			_cpu->ins = value;
 			break;
 	}
@@ -96,27 +96,27 @@ static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 // 	return 0;
 // }
 
-char *reg_to_str(enum REGISTRY reg) {
+char *reg_to_str(u16 reg) {
 	switch (reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			return "rax";
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			return "rbx";
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			return "rdx";
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			return "a1";
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			return "a2";
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			return "a3";
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			return "ins";
 			break;
 	}
@@ -155,37 +155,37 @@ static void ins_add(cpu *_cpu, cmd _cmd, ...) {
 	u16 value = get_val2_from_cmd(_cpu, _cmd);
 
 	switch(_cmd.val1.reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD RAX %hu\n", value);
 			_cpu->rax += value;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD RBX %hu\n", value);
 			_cpu->rbx += value;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD RDX %hu\n", value);
 			_cpu->rdx += value;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD A1 %hu\n", value);
 			_cpu->a1 += value;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD A2 %hu\n", value);
 			_cpu->a2 += value;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD A3 %hu\n", value);
 			_cpu->a3 += value;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD INS %hu\n", value);
 			_cpu->ins += value;
@@ -197,37 +197,37 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 	u16 value = get_val2_from_cmd(_cpu, _cmd);
 
 	switch(_cmd.val1.reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB RAX %hu\n", value);
 			_cpu->rax -= value;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB RBX %hu\n", value);
 			_cpu->rbx -= value;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB RDX %hu\n", value);
 			_cpu->rdx -= value;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB A1 %hu\n", value);
 			_cpu->a1 -= value;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB A2 %hu\n", value);
 			_cpu->a2 -= value;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB A3 %hu\n", value);
 			_cpu->a3 -= value;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB INS %hu\n", value);
 			_cpu->ins -= value;
@@ -236,12 +236,26 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 }
 
 static int check_for_jmp(cmd _cmd) {
-	if (_cmd.val1_type != T_VAL1_LABEL || _cmd.val2_type != T_VAL2_LABEL || _cmd.val3_type != T_VAL3_LABEL) {
-		printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
-		printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
-		printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
-		printf("[PANIC] wrong variable type while jumping\n");
-		return -1;
+	if (_cmd.ins.opcode == JMP_OPCODE || _cmd.ins.opcode == CALL_OPCODE) {
+		if (_cmd.val1_type != T_VAL1_LABEL) {
+			printf("\n[ERROR] Instruction backtrace:\n");
+			printf("Instruction: %s\n", _cmd.ins.token);
+			printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
+			printf("[PANIC] wrong variable type while jumping\n");
+			return -1;
+		}
+	} else {
+		if (_cmd.val3_type != T_VAL3_LABEL) {
+			printf("\n[ERROR] Instruction backtrace:\n");
+			printf("Instruction: %s\n", _cmd.ins.token);
+			printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
+			printf("[PANIC] wrong variable type while jumping\n");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -438,77 +452,77 @@ static void ins_ret(cpu *_cpu) {
 	_cpu->rp.ins = 0;
 }
 
-static void ins_inc(cpu *_cpu, enum REGISTRY reg) {
+static void ins_inc(cpu *_cpu, u16 reg) {
 	switch(reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC RAX\n");
 			_cpu->rax++;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC RBX\n");
 			_cpu->rbx++;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC RDX\n");
 			_cpu->rdx++;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC A1\n");
 			_cpu->a1++;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC A2\n");
 			_cpu->a2++;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC A3\n");
 			_cpu->a3++;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			_cpu->ins++;
 			break;
 	}
 }
 
-static void ins_dec(cpu *_cpu, enum REGISTRY reg) {
+static void ins_dec(cpu *_cpu, u16 reg) {
 	switch(reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC RAX\n");
 			_cpu->rax--;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC RBX\n");
 			_cpu->rbx--;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC RDX\n");
 			_cpu->rdx--;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC A1\n");
 			_cpu->a1--;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC A2\n");
 			_cpu->a2--;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC A3\n");
 			_cpu->a3--;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC INS\n");
 			assert(0 && "You can't decrement instruction counter.");
@@ -861,7 +875,7 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 int execute_interpreter(cpu *_cpu, code_blocks *_code_blocks) {
 	while (execute_instruction(_cpu, &_cpu->ip.block->ins.cmds[_cpu->ip.ins], _code_blocks) != -1 && 
 			_cpu->ip.ins < _cpu->ip.block->ins.count) {
-		ins_inc(_cpu, REG_INS); /* instruction counter + 1 */
+		ins_inc(_cpu, INS_REGISTRY); /* instruction counter + 1 */
 		// printf("CPU INS: %hu\n", _cpu->ins);
 		// printf("CPU RBX: %hu\n", _cpu->rbx);
 		// printf("CPU RAX: %hu\n", _cpu->rax);

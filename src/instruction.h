@@ -13,6 +13,6 @@ int execute_interpreter(cpu *_cpu, code_blocks *_code_blocks);
 
 void print_stack(cpu *_cpu); 
 // char *ins_to_str(enum INSTRUCTION ins);
-char *reg_to_str(enum REGISTRY reg);
+char *reg_to_str(u16 reg);
 
 #endif
