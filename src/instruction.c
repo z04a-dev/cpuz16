@@ -1,63 +1,40 @@
-#ifndef u16
-#define u16 unsigned short
-#endif
-
 #ifndef _INS_IMPL_
 #define _INS_IMPL_
+
+#include <unistd.h>
+#ifndef _STRUCT_IMPL
 #include "struct.h"
-#include "opcodes.h"
+#endif
+
+#include "arch.h"
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+
+#include "util/to_str.h"
 
 int DEBUG_PRINT = 0;
 
 int execute_code(cpu *_cpu, code_blocks *_code_blocks);
 
-u16 get_registry_value(cpu *_cpu, enum REGISTRY reg) {
+u16 get_registry_value(cpu *_cpu, u16 reg) {
 	switch (reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			return _cpu->rax;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			return _cpu->rbx;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			return _cpu->rdx;
-		case REG_A1:
+		case A1_REGISTRY:
 			return _cpu->a1;
-		case REG_A2:
+		case A2_REGISTRY:
 			return _cpu->a2;
-		case REG_A3:
+		case A3_REGISTRY:
 			return _cpu->a3;
-		case REG_INS:
+		case INS_REGISTRY:
 			return _cpu->ins;
 	}
 	return 0;
-}
-
-static void put_value_in_reg(cpu *_cpu, enum REGISTRY reg, u16 value) {
-	switch (reg) {
-		case REG_RAX:
-			_cpu->rax = value;
-			break;
-		case REG_RBX:
-			_cpu->rbx = value;
-			break;
-		case REG_RDX:
-			_cpu->rdx = value;
-			break;
-		case REG_A1:
-			_cpu->a1 = value;
-			break;
-		case REG_A2:
-			_cpu->a2 = value;
-			break;
-		case REG_A3:
-			_cpu->a3 = value;
-			break;
-		case REG_INS:
-			_cpu->ins = value;
-			break;
-	}
 }
 
 static u16 get_value_from_address(cpu *_cpu, u16 address) {
@@ -96,32 +73,32 @@ static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 // 	return 0;
 // }
 
-char *reg_to_str(enum REGISTRY reg) {
+static void put_value_in_reg(cpu *_cpu, u16 reg, u16 value) {
 	switch (reg) {
-		case REG_RAX:
-			return "rax";
+		case RAX_REGISTRY:
+			_cpu->rax = value;
 			break;
-		case REG_RBX:
-			return "rbx";
+		case RBX_REGISTRY:
+			_cpu->rbx = value;
 			break;
-		case REG_RDX:
-			return "rdx";
+		case RDX_REGISTRY:
+			_cpu->rdx = value;
 			break;
-		case REG_A1:
-			return "a1";
+		case A1_REGISTRY:
+			_cpu->a1 = value;
 			break;
-		case REG_A2:
-			return "a2";
+		case A2_REGISTRY:
+			_cpu->a2 = value;
 			break;
-		case REG_A3:
-			return "a3";
+		case A3_REGISTRY:
+			_cpu->a3 = value;
 			break;
-		case REG_INS:
-			return "ins";
+		case INS_REGISTRY:
+			_cpu->ins = value;
 			break;
 	}
-	return "";
 }
+
 
 int push_stack(cpu *_cpu, u16 *_value) {
 	if(_cpu->stack_pointer == &_cpu->stack_value[STACK_SIZE]) {
@@ -155,37 +132,37 @@ static void ins_add(cpu *_cpu, cmd _cmd, ...) {
 	u16 value = get_val2_from_cmd(_cpu, _cmd);
 
 	switch(_cmd.val1.reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD RAX %hu\n", value);
 			_cpu->rax += value;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD RBX %hu\n", value);
 			_cpu->rbx += value;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD RDX %hu\n", value);
 			_cpu->rdx += value;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD A1 %hu\n", value);
 			_cpu->a1 += value;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD A2 %hu\n", value);
 			_cpu->a2 += value;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD A3 %hu\n", value);
 			_cpu->a3 += value;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("ADD INS %hu\n", value);
 			_cpu->ins += value;
@@ -197,37 +174,37 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 	u16 value = get_val2_from_cmd(_cpu, _cmd);
 
 	switch(_cmd.val1.reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB RAX %hu\n", value);
 			_cpu->rax -= value;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB RBX %hu\n", value);
 			_cpu->rbx -= value;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB RDX %hu\n", value);
 			_cpu->rdx -= value;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB A1 %hu\n", value);
 			_cpu->a1 -= value;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB A2 %hu\n", value);
 			_cpu->a2 -= value;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB A3 %hu\n", value);
 			_cpu->a3 -= value;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			if(DEBUG_PRINT)
 				printf("SUB INS %hu\n", value);
 			_cpu->ins -= value;
@@ -236,12 +213,26 @@ static void ins_sub(cpu *_cpu, cmd _cmd) {
 }
 
 static int check_for_jmp(cmd _cmd) {
-	if (_cmd.val1_type != T_VAL1_LABEL || _cmd.val2_type != T_VAL2_LABEL || _cmd.val3_type != T_VAL3_LABEL) {
-		printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
-		printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
-		printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
-		printf("[PANIC] wrong variable type while jumping\n");
-		return -1;
+	if (_cmd.ins.opcode == JMP_OPCODE || _cmd.ins.opcode == CALL_OPCODE) {
+		if (_cmd.val1_type != T_VAL1_LABEL) {
+			printf("\n[ERROR] Instruction backtrace:\n");
+			printf("Instruction: %s\n", _cmd.ins.token);
+			printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
+			printf("[PANIC] wrong variable type while jumping\n");
+			return -1;
+		}
+	} else {
+		if (_cmd.val3_type != T_VAL3_LABEL) {
+			printf("\n[ERROR] Instruction backtrace:\n");
+			printf("Instruction: %s\n", _cmd.ins.token);
+			printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
+			printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
+			printf("[PANIC] wrong variable type while jumping\n");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -250,51 +241,65 @@ static int ins_call(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT) {
 		printf("CALL");
 	}
-	if (check_for_jmp(_cmd) == -1)
-		return -1;
-	for (u16 i = 0; i < _code_blocks->count; ++i) {
-		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
-		if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
-			if (_code_blocks->block[i].ins.count > 0) {
-				_cpu->rp.ins = _cpu->ip.ins + 1;
-				_cpu->rp.block = _cpu->ip.block;
-				_cpu->ip.block = &_code_blocks->block[i];
-				_cpu->ip.ins = 0;
-				if (DEBUG_PRINT) {
-					printf(" RP: %s:%d", _cpu->rp.block->label, _cpu->rp.ins);
-					printf(" IP: %s:%d\n", _cpu->ip.block->label, _cpu->ip.ins);
+	if (_cpu->state == VM_INTERPRETER) {
+		if (check_for_jmp(_cmd) == -1)
+			return -1;
+		for (u16 i = 0; i < _code_blocks->count; ++i) {
+			assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
+			if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
+				if (_code_blocks->block[i].ins.count > 0) {
+					_cpu->rp.ins = _cpu->ip.ins + 1;
+					_cpu->rp.block = _cpu->ip.block;
+					_cpu->ip.block = &_code_blocks->block[i];
+					_cpu->ip.ins = 0;
+					if (DEBUG_PRINT) {
+						printf(" RP: %s:%d", _cpu->rp.block->label, _cpu->rp.ins);
+						printf(" IP: %s:%d\n", _cpu->ip.block->label, _cpu->ip.ins);
+					}
 				}
+				return 0;
+				break;
 			}
-			return 0;
-			break;
 		}
+		printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
+		return -1;
 	}
-	printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
-	return -1;
+	else {
+		u16 next_ins = _cpu->ins + 1;
+		push_stack(_cpu, &next_ins);
+		_cpu->ins = get_val1_from_cmd(_cpu, _cmd);
+		return 0;
+	} 
 } 
 
 static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
+#endif
 	if (DEBUG_PRINT) {
-		printf("JMP");
+		printf("JMP\n");
 	}
-	if (check_for_jmp(_cmd) == -1)
-		return -1;
-	for (u16 i = 0; i < _code_blocks->count; ++i) {
-		assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
-		if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
-			if (_code_blocks->block[i].ins.count > 0) {
-				_cpu->ip.block = &_code_blocks->block[i];
-				_cpu->ip.ins = 0;
-				if (DEBUG_PRINT) {
-					printf(" IP: %s:%d\n", _cpu->ip.block->label, _cpu->ip.ins);
+	if (_cpu->state == VM_INTERPRETER) {
+		if (check_for_jmp(_cmd) == -1)
+			return -1;
+		for (u16 i = 0; i < _code_blocks->count; ++i) {
+			assert(strcmp(_cmd.val1.label, "start") && "you cant jump to .start loser");
+			if (strcmp(_cmd.val1.label, _code_blocks->block[i].label) == 0) {
+				if (_code_blocks->block[i].ins.count > 0) {
+					_cpu->ip.block = &_code_blocks->block[i];
+					_cpu->ip.ins = 0;
+					if (DEBUG_PRINT) {
+						printf(" IP: %s:%d\n", _cpu->ip.block->label, _cpu->ip.ins);
+					}
 				}
+				return 0;
+				break;
 			}
-			return 0;
-			break;
 		}
+		printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
+		return -1;
+	} else {
+		_cpu->ins = get_val1_from_cmd(_cpu, _cmd);
+		return 0;
 	}
-	printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
-	return -1;
 } 
 
 static int check_for_conditional_jmp(cmd _cmd) {
@@ -313,6 +318,14 @@ static int check_for_conditional_jmp(cmd _cmd) {
 	return 0;
 }
 
+static cmd get_temp_conditional_cmd_binary(u16 target) {
+	cmd _cmd = {.val1_type = T_VAL1_U16,
+	.val2_type = T_VAL2_U16,
+	.val3_type = T_VAL3_U16,
+	.val1.num = target};
+	return _cmd;
+}
+
 static cmd get_temp_conditional_cmd(char *target) {
 	cmd _cmd = {.val1_type = T_VAL1_LABEL,
 	.val2_type = T_VAL2_LABEL,
@@ -324,15 +337,22 @@ static cmd get_temp_conditional_cmd(char *target) {
 static int ins_jeq(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT)
 		printf("JEQ\n");
-	if (check_for_conditional_jmp(_cmd) == -1)
-		return -1;
+	if (_cpu->state == VM_INTERPRETER)
+		if (check_for_conditional_jmp(_cmd) == -1)
+			return -1;
 
 	u16 val1 = get_val1_from_cmd(_cpu, _cmd);
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 
 	if (val1 == val2) {
-		if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
-			return -1;
+		if (_cpu->state == VM_BINARY) {
+			if (ins_jmp(_cpu, get_temp_conditional_cmd_binary(_cmd.val3.num), NULL) == -1) {
+				return -1;
+			}
+		} else { 
+			if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
+				return -1;
+		}
 	} else {
 		return 1;
 	}
@@ -342,15 +362,23 @@ static int ins_jeq(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 static int ins_jne(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT)
 		printf("JNE\n");
-	if (check_for_conditional_jmp(_cmd) == -1)
-		return -1;
+
+	if (_cpu->state == VM_INTERPRETER)
+		if (check_for_conditional_jmp(_cmd) == -1)
+			return -1;
 
 	u16 val1 = get_val1_from_cmd(_cpu, _cmd);
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 
 	if (val1 != val2) {
-		if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
-			return -1;
+		if (_cpu->state == VM_BINARY) {
+			if (ins_jmp(_cpu, get_temp_conditional_cmd_binary(_cmd.val3.num), NULL) == -1) {
+				return -1;
+			}
+		} else { 
+			if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
+				return -1;
+		}
 	} else {
 		return 1;
 	}
@@ -360,15 +388,23 @@ static int ins_jne(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 static int ins_jgt(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT)
 		printf("JGT\n");
-	if (check_for_conditional_jmp(_cmd) == -1)
-		return -1;
+
+	if (_cpu->state == VM_INTERPRETER)
+		if (check_for_conditional_jmp(_cmd) == -1)
+			return -1;
 
 	u16 val1 = get_val1_from_cmd(_cpu, _cmd);
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 
 	if (val1 > val2) {
-		if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
-			return -1;
+		if (_cpu->state == VM_BINARY) {
+			if (ins_jmp(_cpu, get_temp_conditional_cmd_binary(_cmd.val3.num), NULL) == -1) {
+				return -1;
+			}
+		} else { 
+			if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
+				return -1;
+		}
 	} else {
 		return 1;
 	}
@@ -378,15 +414,23 @@ static int ins_jgt(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 static int ins_jlt(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT)
 		printf("JLT\n");
-	if (check_for_conditional_jmp(_cmd) == -1)
-		return -1;
+
+	if (_cpu->state == VM_INTERPRETER)
+		if (check_for_conditional_jmp(_cmd) == -1)
+			return -1;
 
 	u16 val1 = get_val1_from_cmd(_cpu, _cmd);
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 
 	if (val1 < val2) {
-		if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
-			return -1;
+		if (_cpu->state == VM_BINARY) {
+			if (ins_jmp(_cpu, get_temp_conditional_cmd_binary(_cmd.val3.num), NULL) == -1) {
+				return -1;
+			}
+		} else { 
+			if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
+				return -1;
+		}
 	} else {
 		return 1;
 	}
@@ -396,15 +440,23 @@ static int ins_jlt(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 static int ins_jge(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT)
 		printf("JGE\n");
-	if (check_for_conditional_jmp(_cmd) == -1)
-		return -1;
+
+	if (_cpu->state == VM_INTERPRETER)
+		if (check_for_conditional_jmp(_cmd) == -1)
+			return -1;
 
 	u16 val1 = get_val1_from_cmd(_cpu, _cmd);
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 
 	if (val1 >= val2) {
-		if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
-			return -1;
+		if (_cpu->state == VM_BINARY) {
+			if (ins_jmp(_cpu, get_temp_conditional_cmd_binary(_cmd.val3.num), NULL) == -1) {
+				return -1;
+			}
+		} else { 
+			if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
+				return -1;
+		}
 	} else {
 		return 1;
 	}
@@ -414,101 +466,118 @@ static int ins_jge(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 static int ins_jle(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	if (DEBUG_PRINT)
 		printf("JLE\n");
-	if (check_for_conditional_jmp(_cmd) == -1)
-		return -1;
+
+	if (_cpu->state == VM_INTERPRETER)
+		if (check_for_conditional_jmp(_cmd) == -1)
+			return -1;
 
 	u16 val1 = get_val1_from_cmd(_cpu, _cmd);
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 
 	if (val1 <= val2) {
-		if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
-			return -1;
+		if (_cpu->state == VM_BINARY) {
+			if (ins_jmp(_cpu, get_temp_conditional_cmd_binary(_cmd.val3.num), NULL) == -1) {
+				return -1;
+			}
+		} else { 
+			if (ins_jmp(_cpu, get_temp_conditional_cmd(_cmd.val3.label), _code_blocks) == -1)
+				return -1;
+		}
 	} else {
 		return 1;
 	}
 	return 0;
 }
 
+// TODO implement normal stack RET behaviour.
 static void ins_ret(cpu *_cpu) {
 	if (DEBUG_PRINT) 
 		printf("RET\n");
-	assert(_cpu->rp.block != NULL && "Return Pointer is nil. Are you trying to return from jmp?");
-	_cpu->ip = _cpu->rp;
-	_cpu->rp.block = NULL;
-	_cpu->rp.ins = 0;
+	if (_cpu->state == VM_BINARY) {
+		u16 value = 0;
+		if (pop_stack(_cpu, &value) == -1) {
+			printf("[PANIC] pop_stack()\n");
+		} 
+		_cpu->ins = value;
+	} else {
+		assert(_cpu->rp.block != NULL && "Return Pointer is nil. Are you trying to return from jmp?");
+		_cpu->ip = _cpu->rp;
+		_cpu->rp.block = NULL;
+		_cpu->rp.ins = 0;
+	}
 }
 
-static void ins_inc(cpu *_cpu, enum REGISTRY reg) {
+static void ins_inc(cpu *_cpu, u16 reg) {
 	switch(reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC RAX\n");
 			_cpu->rax++;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC RBX\n");
 			_cpu->rbx++;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC RDX\n");
 			_cpu->rdx++;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC A1\n");
 			_cpu->a1++;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC A2\n");
 			_cpu->a2++;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("INC A3\n");
 			_cpu->a3++;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			_cpu->ins++;
 			break;
 	}
 }
 
-static void ins_dec(cpu *_cpu, enum REGISTRY reg) {
+static void ins_dec(cpu *_cpu, u16 reg) {
 	switch(reg) {
-		case REG_RAX:
+		case RAX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC RAX\n");
 			_cpu->rax--;
 			break;
-		case REG_RBX:
+		case RBX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC RBX\n");
 			_cpu->rbx--;
 			break;
-		case REG_RDX:
+		case RDX_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC RDX\n");
 			_cpu->rdx--;
 			break;
-		case REG_A1:
+		case A1_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC A1\n");
 			_cpu->a1--;
 			break;
-		case REG_A2:
+		case A2_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC A2\n");
 			_cpu->a2--;
 			break;
-		case REG_A3:
+		case A3_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC A3\n");
 			_cpu->a3--;
 			break;
-		case REG_INS:
+		case INS_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC INS\n");
 			assert(0 && "You can't decrement instruction counter.");
@@ -623,6 +692,8 @@ static void ins_lv(cpu *_cpu, cmd _cmd) {
 		printf("LV\n");
 	assert(_cmd.val1_type == T_VAL1_REG && "ILL exception: in LV first arg must be registry");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	// TODO
+	// ins_lv should be allowed for use on stack
 	assert(val2 <= RAM_SIZE-STACK_SIZE && "Segmentation fault: you can't access stack using lv instruction");
 	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->ram.cells[val2]);
 }
@@ -722,11 +793,19 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			break;
 
 		case JMP_OPCODE:
-			if (ins_jmp(_cpu, *_cmd, _code_blocks) == -1) 
-				return -1;
+			if (_cpu->state == VM_BINARY) {
+				if (ins_jmp(_cpu, *_cmd, NULL) == -1) 
+					return -1;
+			} else
+				if (ins_jmp(_cpu, *_cmd, _code_blocks) == -1) 
+					return -1;
 			return 0;
 			break;
 		case CALL_OPCODE:
+			if (_cpu->state == VM_BINARY) {
+				if (ins_call(_cpu, *_cmd, NULL) == -1) 
+					return -1;
+			} else
 			if (ins_call(_cpu, *_cmd, _code_blocks) == -1) 
 				return -1;
 			return 0;
@@ -782,51 +861,93 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			break;
 
 		case JEQ_OPCODE:
-			status = ins_jeq(_cpu, *_cmd, _code_blocks);
+			if (_cpu->state == VM_BINARY)
+				status = ins_jeq(_cpu, *_cmd, NULL);
+			else
+				status = ins_jeq(_cpu, *_cmd, _code_blocks);
 			if (status == -1)
 				return -1;
-			else if (status == 1)
-				_cpu->ip.ins++;
+			if (status == 1) {
+				if (_cpu->state == VM_INTERPRETER)
+					_cpu->ip.ins++;
+				else
+					return 2;
+			}
 			return 0;
 			break;
 		case JNE_OPCODE:
-			status = ins_jne(_cpu, *_cmd, _code_blocks);
+			if (_cpu->state == VM_BINARY)
+				status = ins_jne(_cpu, *_cmd, NULL);
+			else
+				status = ins_jne(_cpu, *_cmd, _code_blocks);
 			if (status == -1)
 				return -1;
-			else if (status == 1)
-				_cpu->ip.ins++;
+			if (status == 1) {
+				if (_cpu->state == VM_INTERPRETER)
+					_cpu->ip.ins++;
+				else
+					return 2;
+			}
 			return 0;
 			break;
 		case JGT_OPCODE:
-			status = ins_jgt(_cpu, *_cmd, _code_blocks);
+			if (_cpu->state == VM_BINARY)
+				status = ins_jgt(_cpu, *_cmd, NULL);
+			else
+				status = ins_jgt(_cpu, *_cmd, _code_blocks);
 			if (status == -1)
 				return -1;
-			else if (status == 1)
-				_cpu->ip.ins++;
+			if (status == 1) {
+				if (_cpu->state == VM_INTERPRETER)
+					_cpu->ip.ins++;
+				else
+					return 2;
+			}
 			return 0;
 			break;
 		case JLT_OPCODE:
-			status = ins_jlt(_cpu, *_cmd, _code_blocks);
+			if (_cpu->state == VM_BINARY)
+				status = ins_jlt(_cpu, *_cmd, NULL);
+			else
+				status = ins_jlt(_cpu, *_cmd, _code_blocks);
 			if (status == -1)
 				return -1;
-			else if (status == 1)
-				_cpu->ip.ins++;
+			if (status == 1) {
+				if (_cpu->state == VM_INTERPRETER)
+					_cpu->ip.ins++;
+				else
+					return 2;
+			}
 			return 0;
 			break;
 		case JGE_OPCODE:
-			status = ins_jge(_cpu, *_cmd, _code_blocks);
+			if (_cpu->state == VM_BINARY)
+				status = ins_jge(_cpu, *_cmd, NULL);
+			else
+				status = ins_jge(_cpu, *_cmd, _code_blocks);
 			if (status == -1)
 				return -1;
-			else if (status == 1)
-				_cpu->ip.ins++;
+			if (status == 1) {
+				if (_cpu->state == VM_INTERPRETER)
+					_cpu->ip.ins++;
+				else
+					return 2;
+			}
 			return 0;
 			break;
 		case JLE_OPCODE:
-			status = ins_jle(_cpu, *_cmd, _code_blocks);
+			if (_cpu->state == VM_BINARY)
+				status = ins_jle(_cpu, *_cmd, NULL);
+			else
+				status = ins_jle(_cpu, *_cmd, _code_blocks);
 			if (status == -1)
 				return -1;
-			else if (status == 1)
-				_cpu->ip.ins++;
+			if (status == 1) {
+				if (_cpu->state == VM_INTERPRETER)
+					_cpu->ip.ins++;
+				else
+					return 2;
+			}
 			return 0;
 			break;
 
@@ -852,14 +973,14 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			ins_div(_cpu, *_cmd);
 			break;
 	}
-			_cpu->ip.ins++;
+	_cpu->ip.ins++;
 	return 0;
 }
 
-int execute_code(cpu *_cpu, code_blocks *_code_blocks) {
+int execute_interpreter(cpu *_cpu, code_blocks *_code_blocks) {
 	while (execute_instruction(_cpu, &_cpu->ip.block->ins.cmds[_cpu->ip.ins], _code_blocks) != -1 && 
 			_cpu->ip.ins < _cpu->ip.block->ins.count) {
-		ins_inc(_cpu, REG_INS); /* instruction counter + 1 */
+		_cpu->ic++; /* instruction counter + 1 */
 		// printf("CPU INS: %hu\n", _cpu->ins);
 		// printf("CPU RBX: %hu\n", _cpu->rbx);
 		// printf("CPU RAX: %hu\n", _cpu->rax);
@@ -867,5 +988,3 @@ int execute_code(cpu *_cpu, code_blocks *_code_blocks) {
 	// print_stack(_cpu);
 	return -1;
 }
-
-#endif

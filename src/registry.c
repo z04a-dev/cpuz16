@@ -5,7 +5,7 @@
 
 #ifndef _REG_IMPL_
 #define _REG_IMPL_
-#include "isa.h" /* includes struct.h */
+#include "struct.h"
 #include <stdlib.h>
 #include <assert.h>
 
@@ -20,19 +20,18 @@ struct cpu init_cpu(){
 	printf("[CPUZ16] initializing register stack...\n");
 	cpu _cpu = {0};
 	init_memory(&_cpu);
-	_cpu.isa = init_isa();
 	return _cpu;
 }
 
 void print_memory(struct cpu *_cpu) {
 	u16 cols = 6;
-	printf("----- RAM (size: %hu) contents -----\n", RAM_SIZE);
+	printf("----- RAM (size: %hu cells) contents -----\n", RAM_SIZE);
 	for (u16 i = 0; i < RAM_SIZE - STACK_SIZE + 1; ++i) {
 		if (i % cols == 0 && i != 0)
 			printf("\n");
 		printf("[0x%04x]:0x%04x ", i, _cpu->ram.cells[i]);
 	}
-	printf("\n----- STACK (size: %hu) contents -----\n", STACK_SIZE);
+	printf("\n----- STACK (size: %hu cells) contents -----\n", STACK_SIZE);
 	for (int i = RAM_SIZE - STACK_SIZE + 1; i < RAM_SIZE + 1; ++i) {
 		if (i % cols == 0 && i != RAM_SIZE - STACK_SIZE - 1)
 			printf("\n");
@@ -49,11 +48,12 @@ void print_cpu_state(struct cpu *_cpu) {
 	printf("a1 : %5hu (0x%04x)\n", _cpu->a1 , _cpu->a1);
 	printf("a2 : %5hu (0x%04x)\n", _cpu->a2 , _cpu->a2);
 	printf("a3 : %5hu (0x%04x)\n", _cpu->a3 , _cpu->a3);
+	printf("ins: %5hu (0x%04x)\n", _cpu->ins , _cpu->ins);
 	printf("Stack pointer: %p\n", (void*)_cpu->stack_pointer);
 	// TODO return pointer
 	// TODO free/max RAM/stack
 	// TODO RAM pointer
-	printf("Instruction counter: %llu\n\n", _cpu->ins);
+	printf("Instruction counter: %llu\n\n", _cpu->ic);
 }
 
 void reset_cpu_state(struct cpu *_cpu) {
@@ -70,7 +70,6 @@ void reset_cpu_state(struct cpu *_cpu) {
 void free_cpu(struct cpu *_cpu) {
 	printf("[CPUZ16] unloading RAM\n");
 	free(_cpu->ram.cells);
-	free(_cpu->isa.ins);
 }
 
 #endif

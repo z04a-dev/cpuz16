@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "opcodes.h"
+#include "arch.h"
 
 static instruction_set variadic_populate_ins(int count, ...) {
 	instruction_set _ISA = {0};

@@ -1,3 +1,7 @@
 build/asmexe
+build/z16
+build/z16c
 thoughts.md
+output.bin
+build/output.bin
 other/*
