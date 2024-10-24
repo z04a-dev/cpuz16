@@ -77,6 +77,7 @@ CPUZ16 has in-house compiler called z16c, that is being compiled with all target
 If you only want to compile compiler, then use this command:
 
 `make compiler`             <- for optimized version
+
 `make compiler_unoptimized` <- for unoptimized version
 
 To use compiler, simply provide it with correct .asm file, like this:
