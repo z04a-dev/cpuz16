@@ -85,3 +85,7 @@
 /* math ISA extension */
 #define MUL_OPCODE 0x0018
 #define DIV_OPCODE 0x0019
+
+/* bitshifting ISA extension */
+#define ROR_OPCODE 0x001a
+#define ROL_OPCODE 0x001b

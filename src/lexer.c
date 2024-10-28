@@ -186,6 +186,9 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				// 	str = &str[1];
 				// }
 				if (is_token_registry(str, &reg)) {
+					// TODO 
+					// maybe it's a good idea to allow incrementing IC?
+					// that will allow skipping instructions
 					assert(!(_cmd->ins.opcode == INC_OPCODE && reg == INS_REGISTRY) && "You can't increment IC manually.");
 					_cmd->val1_type = T_VAL1_REG;
 					_cmd->val1.reg = reg; 

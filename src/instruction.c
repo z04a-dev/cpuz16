@@ -740,6 +740,23 @@ static void ins_div(cpu *_cpu, cmd _cmd) {
 	}
 }
 
+/* ror and rol are logical bit shifting instructions, not arithmetical. */
+static void ins_ror(cpu *_cpu, cmd _cmd) {
+	if (DEBUG_PRINT)
+		printf("ROR\n");
+	u16 val1 = get_registry_value(_cpu, _cmd.val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	put_value_in_reg(_cpu, _cmd.val1.reg, val1 >> val2);
+}
+
+static void ins_rol(cpu *_cpu, cmd _cmd) {
+	if (DEBUG_PRINT)
+		printf("ROL\n");
+	u16 val1 = get_registry_value(_cpu, _cmd.val1.reg);
+	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	put_value_in_reg(_cpu, _cmd.val1.reg, val1 << val2);
+}
+
 void ins_dbg_print() { /* turn on/off INS printing */
 	if (DEBUG_PRINT) {
 		printf("PRINT DEBUG: 0\n");
@@ -971,6 +988,20 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 				return -1;
 			}
 			ins_div(_cpu, *_cmd);
+			break;
+		case ROR_OPCODE:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_ROR\n");
+				return -1;
+			}
+			ins_ror(_cpu, *_cmd);
+			break;
+		case ROL_OPCODE:
+			if(_cmd->val1_type == T_VAL1_U16) {
+				printf("[ERROR] Illegal values provided to INS_ROL\n");
+				return -1;
+			}
+			ins_rol(_cpu, *_cmd);
 			break;
 	}
 	_cpu->ip.ins++;

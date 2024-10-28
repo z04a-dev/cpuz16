@@ -57,6 +57,10 @@ all of instructions receive three args:
 - #0018 mul <- multiply val1 by val2
 - #0019 div <- divide val1 by val2
 
+***bitshift ISA extension***
+- #0018 ror <- rotate right reg1 by val2
+- #0019 rol <- rotate left reg1 by val2
+
 ## VM
 
 This repository provides you with working in-house implementation of CPUZ16 virtual machine
