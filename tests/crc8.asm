@@ -3,6 +3,7 @@
 start:
 	;; get CRC-8 of 0xBEEF (48879)
 	mov rax, 48879; ;; put num to rax
+	mov a1, 0; ;; init value of crc is 0 (compliant with CRC-8\GSM-A)
 	call crc8;
 end;
 

@@ -103,7 +103,7 @@ static bool if_jmp(struct instruction instr) {
 // Compiler decrements label pos by MAGIC_SIZE
 void parse_bytecode(u16 *bytecode, instruction_set *_isa, cpu *_cpu) {
 	// unsigned long CLOCK = SEC_TO_MS(1. / 1000000.);
-	printf("CLOCK: %f\n", CLOCK);
+	// printf("CLOCK: %f\n", CLOCK);
 	for (;;) {
 		u16 i = _cpu->ins;
 		u16 hint_count = 0;
