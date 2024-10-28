@@ -1,7 +1,5 @@
-/* This is test-field for creating a compiler for CPUZ16 */
+/* Bytecode compiler for CPUZ16 */
 /* by z04a */
-
-/* This is not working now! Currently in the process of refactoring lexer logic */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -331,6 +329,8 @@ int main(int argc, char **argv) {
 	print_byte_array(compiler.bytecode, 0, bytecode_ptr + 1);
 
 	printf("Successfully compiled...\n");
+	u16 written_bytes = (bytecode_ptr - 2) * 2;
+	printf("Written: %d bytes | Free: %d bytes\n", written_bytes, (MAX_ROM_SIZE - MAGIC_SIZE * 2) - written_bytes);
 	// TODO FIX
 	printf("Saving binary...\n");
 	create_binary(compiler.bytecode, "output.bin");

@@ -1,3 +1,5 @@
+;; Primitive bubble sorting algorithm
+;; interpreter-compatible
 start:
     mov a3, 1000;
     mov rdx, a3;
@@ -10,7 +12,6 @@ whileless:
     call nilreg;
     jmp sort;
 end;
-
 nilreg:
     mov rax, 0;
     mov rbx, 0;

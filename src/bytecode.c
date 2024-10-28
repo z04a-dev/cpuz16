@@ -2,9 +2,9 @@
 #include "struct.h"
 #endif
 
-// #ifndef _UTIL_COMPILER
-// #include "util/comp.h"
-// #endif
+#include <time.h>
+
+#define SEC_TO_MS(sec) ((sec)*1000000)
 
 #include "util/comp.h"
 
@@ -14,14 +14,17 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
-
+#include <unistd.h>
 
 #include "util/to_str.h"
 #include "instruction.h"
 
+#define SECS_TO_NS(SECS) (SECS * 1000000000.)
 
-#define DEBUG 0
-#define DEBUG_PRINT 0
+#define DEBUG 0 // Print instructions and execute
+#define DEBUG_PRINT 0 // Don't execute instructions, just print them. (wouldn't HALT)
+
+#define CLOCK SECS_TO_NS((1. / 1000000000.))
 
 static u16 *vm_create_bytearray() {
 	unsigned int byte_array_size = (NUM_CELLS) * sizeof(u16);
@@ -99,6 +102,8 @@ static bool if_jmp(struct instruction instr) {
 
 // Compiler decrements label pos by MAGIC_SIZE
 void parse_bytecode(u16 *bytecode, instruction_set *_isa, cpu *_cpu) {
+	// unsigned long CLOCK = SEC_TO_MS(1. / 1000000.);
+	printf("CLOCK: %f\n", CLOCK);
 	for (;;) {
 		u16 i = _cpu->ins;
 		u16 hint_count = 0;
@@ -147,12 +152,12 @@ void parse_bytecode(u16 *bytecode, instruction_set *_isa, cpu *_cpu) {
 			_cmd.val3_type = T_VAL3_U16;
 			_cmd.val3.num = val3;
 			if (DEBUG)
-				printf(" VAL3: %d\n", val3);
+				printf(" VAL3: %d | TOTAL: %llu\n", val3, _cpu->ic);
 		} else {
 			_cmd.val3_type = T_VAL3_REG;
 			_cmd.val3.reg = val3;
 			if (DEBUG)
-				printf(" VAL3: %s\n", reg_to_str(val3));
+				printf(" VAL3: %s | TOTAL: %llu\n", reg_to_str(val3), _cpu->ic);
 		}
 
 		// printf("FULL [0x%04x]: 0x%016b | INSTR: %s | VAL1: 0x%03b | VAL2: 0x%03b | VAL3: 0x%03b\n", (unsigned int)i, cell, instr.token, val1, val2, val3);
@@ -160,6 +165,10 @@ void parse_bytecode(u16 *bytecode, instruction_set *_isa, cpu *_cpu) {
 			for (size_t hint = 0; hint < hint_count; ++hint) {
 				printf("HINT [0x%04x]: FULL: 0x%016b | SKIPPING...\n", (unsigned int)(i + (hint + 1)), bytecode[i + (hint + 1)]);
 			}
+
+		// Wait for clock
+		// usleep(CLOCK);
+		// nanosleep((const struct timespec[]){{0, CLOCK}}, NULL);
 		
 		if (DEBUG_PRINT)
 			_cpu->ins += hint_count + 1;
