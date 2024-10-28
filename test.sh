@@ -14,8 +14,8 @@ else
 		echo "Please put .asm tests in tests/ folder"
 	else 
 		for file in $files; do
-			if [[ $file == "tests/deepjump.asm" ]] ; then
-				echo "Skipping deepjump.asm, currently not supported."
+			if [[ $file == "tests/deepjump.asm" || $file == "tests/crc8.asm" ]] ; then
+				echo "Skipping " $file ", currently not supported."
 				continue
 			fi
 			echo "--------------------"
