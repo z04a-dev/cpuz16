@@ -21,19 +21,19 @@ RAM size is 65535 bytes (32767 16 bit cells), at the end of which 512 bytes (256
 
 ## instructions
 - #0000 nop <- do nothing
-- #0001 mov where, what <- put something from what to where
-- #0002 add what, howmuch <- add howmuch to what
-- #0003 sub what, howmuch <- remove howmuch from what
-- #0004 inc what <- what += 1
-- #0005 dec what <- what -= 1
+- #0001 mov reg1, what <- put something from what to reg1
+- #0002 add reg1, howmuch <- add howmuch to reg1
+- #0003 sub reg1, howmuch <- remove howmuch from reg1
+- #0004 inc reg1 <- reg1 += 1
+- #0005 dec reg1 <- reg1 -= 1
 - #0006 jmp where <- jumps at label (don't save return pointer)
 - #0007 call where <- calls function (saves return pointer)
 - #0008 ret <- returns from function to rp
-- #000a and reg, (reg or value) <- bitwise AND (result stored in reg1)
-- #000b xor reg, (reg or value) <- bitwise XOR (result stored in reg1)
-- #000c push what <- push register to stack
-- #000d pop what <- pops value from stack to register
-- #0009 or reg, (reg or value) <- bitwise OR (result stored in reg1)
+- #000a and reg1, (reg2 or value) <- bitwise AND (result stored in reg1)
+- #000b xor reg1, (reg2 or value) <- bitwise XOR (result stored in reg1)
+- #000c push reg1 <- push register to stack
+- #000d pop reg1 <- pops value from stack to register
+- #0009 or reg1, (reg2 or value) <- bitwise OR (result stored in reg1)
 - #000e halt <- panic (stop executing)
 - #000f end <- closes code block
 
@@ -41,7 +41,7 @@ RAM size is 65535 bytes (32767 16 bit cells), at the end of which 512 bytes (256
 
 all of instructions receive three args:
 
-<REG || ADDR || NUM> <REG || ADDR || NUM> LABEL 
+<REG || NUM> <REG || NUM> LABEL 
 - #0010 jeq <- if first arg == second arg, then jump
 - #0011 jne <- if first arg != second arg, then jump
 - #0012 jgt <- if first arg >  second arg, then jump
@@ -130,6 +130,8 @@ start:
     add rax, 1;
     add rbx, 10;
     add rax, rbx;
+    ;; Address evaluation is deprecated.
+    ;; #VALUE represents hex value now.
     mov rax, #41FA;
 
     add a3, 500;

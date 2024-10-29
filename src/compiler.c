@@ -154,10 +154,6 @@ void append_bytearray(struct compile_bytecode *compiler, code_block block, u16 *
 				}
 				else if (block.ins.cmds[i].val1_type == T_VAL1_LABEL)
 					append_fix(compiler, *start_pointer + hint_count, block.ins.cmds[i].val1.label);
-				else if (block.ins.cmds[i].val1_type == T_VAL1_ADDRESS) {
-					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
-					compiler->bytecode[*start_pointer + hint_count] = 0xFFFF;
-				}
 			}
 		}
 
@@ -176,10 +172,6 @@ void append_bytearray(struct compile_bytecode *compiler, code_block block, u16 *
 				else if (block.ins.cmds[i].val2_type == T_VAL2_LABEL)
 					// compiler->bytecode[*start_pointer + hint_count] = 0xFFFF;
 					append_fix(compiler, *start_pointer + hint_count, block.ins.cmds[i].val2.label);
-				else if (block.ins.cmds[i].val2_type == T_VAL2_ADDRESS) {
-					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
-					compiler->bytecode[*start_pointer + hint_count] = 0xFFFF;
-				}
 			}
 		}
 
@@ -201,10 +193,6 @@ void append_bytearray(struct compile_bytecode *compiler, code_block block, u16 *
 				else if (block.ins.cmds[i].val3_type == T_VAL3_LABEL)
 					// compiler->bytecode[*start_pointer + hint_count] = 0xFFFF;
 					append_fix(compiler, *start_pointer + hint_count, block.ins.cmds[i].val3.label);
-				else if (block.ins.cmds[i].val3_type == T_VAL3_ADDRESS) {
-					printf("it shouldn't be ADDRESS, Please FIX!!!!!!\n");
-					compiler->bytecode[*start_pointer + hint_count] = 0xFFFF;
-				}
 			}
 		}
 		// moving pointer to next cell

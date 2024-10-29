@@ -24,19 +24,19 @@ typedef struct instruction_set {
 
 typedef struct {
 	ins ins;
-	enum{ T_VAL1_NULL, T_VAL1_U16, T_VAL1_REG, T_VAL1_LABEL, T_VAL1_ADDRESS } val1_type;
+	enum{ T_VAL1_NULL, T_VAL1_U16, T_VAL1_REG, T_VAL1_LABEL} val1_type;
 	union {
 		u16 num;
 		u16 reg;
 		char *label;
 	} val1;
-	enum{ T_VAL2_NULL, T_VAL2_U16, T_VAL2_REG, T_VAL2_LABEL, T_VAL2_ADDRESS } val2_type;
+	enum{ T_VAL2_NULL, T_VAL2_U16, T_VAL2_REG, T_VAL2_LABEL} val2_type;
 	union {
 		u16 num;
 		u16 reg;
 		char *label;
 	} val2;
-	enum{ T_VAL3_NULL, T_VAL3_U16, T_VAL3_REG, T_VAL3_LABEL, T_VAL3_ADDRESS } val3_type;
+	enum{ T_VAL3_NULL, T_VAL3_U16, T_VAL3_REG, T_VAL3_LABEL} val3_type;
 	union {
 		u16 num;
 		u16 reg;

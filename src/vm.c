@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 	code_blocks code = {.capacity = -1};
 	start_lexer(&isa, argv[1], &code);
 
-	// print_code_blocks();
+	// print_code_blocks(&code);
 
 	// print_ins_set();
 	

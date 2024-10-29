@@ -2,8 +2,8 @@
 ;; works only in bytecode
 start:
 	;; get CRC-8 of 0xBEEF (48879)
-	mov rax, 48879; ;; put num to rax
-	mov a1, 0; ;; init value of crc is 0 (compliant with CRC-8\GSM-A)
+	mov rax, #BEEF; ;; put num to rax
+	mov a1, #0000; ;; init value of crc is 0 (compliant with CRC-8\GSM-A)
 	call crc8;
 end;
 
@@ -11,7 +11,7 @@ end;
 ;; return crc in a1
 crc8:
 	;; poly is 0x1D00 (7424) which is compliant with CRC-8\GSM-A
-	mov a3, 7424; ;; put poly value in a3
+	mov a3, #1D00; ;; put poly value in a3
 	xor a1, rax; ;; xor crc with num
 	call bitwise;
 	ror a1, 8; ;; move from big endian to little endian
@@ -28,7 +28,7 @@ end;
 cmp:
 	mov rdx, a1;
 	;; check if MSB (most significant bit) is set.
-	and rdx, 32768; ;; rdx & 0x8000
+	and rdx, #8000; ;; rdx & 0x8000
 	jne rdx, 0, rdxjne; ;; if (crc & 0x8000) != 0
 	rol a1, 1; ;; else crc <<= 1
 	ret;

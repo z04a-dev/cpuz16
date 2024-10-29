@@ -103,8 +103,6 @@ static void debug_print_cmd(cmd *_cmd) {
 		asprintf(&_v1, "%s", reg_to_str(_cmd->val1.reg));
 	else if (_cmd->val1_type == T_VAL1_LABEL)
 		asprintf(&_v1, "%s", _cmd->val1.label);
-	else if (_cmd->val1_type == T_VAL1_ADDRESS)
-		asprintf(&_v1, "#%04X", _cmd->val1.num);
 
 	char *_v2;
 	if (_cmd->val2_type == T_VAL2_U16)
@@ -113,8 +111,6 @@ static void debug_print_cmd(cmd *_cmd) {
 		asprintf(&_v2, "%s", reg_to_str(_cmd->val2.reg));
 	else if (_cmd->val2_type == T_VAL2_LABEL)
 		asprintf(&_v2, "%s", _cmd->val2.label);
-	else if (_cmd->val2_type == T_VAL2_ADDRESS)
-		asprintf(&_v2, "#%04X", _cmd->val2.num);
 
 	char *_v3;
 	if (_cmd->val3_type == T_VAL3_U16)
@@ -123,8 +119,6 @@ static void debug_print_cmd(cmd *_cmd) {
 		asprintf(&_v3, "%s", reg_to_str(_cmd->val3.reg));
 	else if (_cmd->val3_type == T_VAL3_LABEL)
 		asprintf(&_v3, "%s", _cmd->val3.label);
-	else if (_cmd->val3_type == T_VAL3_ADDRESS)
-		asprintf(&_v3, "#%04X", _cmd->val3.num);
 
 	printf("[DEBUG] cmd: %s val1: %s val2: %s val3: %s", _cmd->ins.token, _v1, _v2, _v3);
 }
@@ -139,8 +133,8 @@ static bool is_token_registry(char *token,int *reg) {
 	return false;
 }
 
-static bool is_token_address(char *token) {
-	if (token[0] == '#' && strlen(token) == 5) {
+static bool is_token_hex(char *token) {
+	if (token[0] == '#' && strlen(token) <= 5 && strlen(token) > 1) {
 		// TODO implement checking for bad values
 		// such as #00GJ
 		// 0 - 9 A - F
@@ -192,9 +186,9 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 					assert(!(_cmd->ins.opcode == INC_OPCODE && reg == INS_REGISTRY) && "You can't increment IC manually.");
 					_cmd->val1_type = T_VAL1_REG;
 					_cmd->val1.reg = reg; 
-				} else if (is_token_address(str)) {
+				} else if (is_token_hex(str)) {
 					str = &str[1];
-					_cmd->val1_type = T_VAL1_ADDRESS;
+					_cmd->val1_type = T_VAL1_U16;
 					_cmd->val1.num = (u16)strtol(str, NULL, 16);
 				} else {
 					_cmd->val1_type = T_VAL1_U16;
@@ -209,9 +203,9 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				if (is_token_registry(str, &reg)) {
 					_cmd->val2_type = T_VAL2_REG;
 					_cmd->val2.reg = reg; 
-				} else if (is_token_address(str)) {
+				} else if (is_token_hex(str)) {
 					str = &str[1];
-					_cmd->val2_type = T_VAL2_ADDRESS;
+					_cmd->val2_type = T_VAL2_U16;
 					_cmd->val2.num = (u16)strtol(str, NULL, 16);
 				} else {
 					_cmd->val2_type = T_VAL2_U16;
@@ -236,9 +230,9 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 					if (is_token_registry(str, &reg)) {
 						_cmd->val3_type = T_VAL3_REG;
 						_cmd->val3.reg = reg; 
-					} else if (is_token_address(str)) {
+					} else if (is_token_hex(str)) {
 						str = &str[1];
-						_cmd->val3_type = T_VAL3_ADDRESS;
+						_cmd->val3_type = T_VAL3_U16;
 						_cmd->val3.num = (u16)strtol(str, NULL, 16);
 					} else {
 						_cmd->val3_type = T_VAL3_U16;
