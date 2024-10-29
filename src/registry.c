@@ -10,10 +10,10 @@
 #include <assert.h>
 
 static void init_memory(cpu *_cpu) {
-	_cpu->ram.cells = calloc(RAM_SIZE + 1, sizeof(u16));
-	_cpu->stack_value = &_cpu->ram.cells[RAM_SIZE - STACK_SIZE + 1];
+	_cpu->bus.cells = calloc(BUS_SIZE, sizeof(u16));
+	_cpu->stack_value = &_cpu->bus.cells[ROM_START - STACK_SIZE ];
 	_cpu->stack_pointer = _cpu->stack_value;
-	assert(_cpu->ram.cells != NULL && "buy ram");
+	assert(_cpu->bus.cells != NULL && "buy ram");
 }
 
 struct cpu init_cpu(){
@@ -26,16 +26,16 @@ struct cpu init_cpu(){
 void print_memory(struct cpu *_cpu) {
 	u16 cols = 6;
 	printf("----- RAM (size: %hu cells) contents -----\n", RAM_SIZE);
-	for (u16 i = 0; i < RAM_SIZE - STACK_SIZE + 1; ++i) {
+	for (u16 i = RAM_START; i < BUS_SIZE - STACK_SIZE + 1; ++i) {
 		if (i % cols == 0 && i != 0)
 			printf("\n");
-		printf("[0x%04x]:0x%04x ", i, _cpu->ram.cells[i]);
+		printf("[0x%04x]:0x%04x ", i, _cpu->bus.cells[i]);
 	}
 	printf("\n----- STACK (size: %hu cells) contents -----\n", STACK_SIZE);
-	for (int i = RAM_SIZE - STACK_SIZE + 1; i < RAM_SIZE + 1; ++i) {
-		if (i % cols == 0 && i != RAM_SIZE - STACK_SIZE - 1)
+	for (int i = BUS_SIZE - STACK_SIZE + 1; i < BUS_SIZE + 1; ++i) {
+		if (i % cols == 0 && i != BUS_SIZE - STACK_SIZE - 1)
 			printf("\n");
-		printf("[0x%04x]:0x%04x ", i, _cpu->ram.cells[i]);
+		printf("[0x%04x]:0x%04x ", i, _cpu->bus.cells[i]);
 	}
 	printf("\n");
 }
@@ -69,7 +69,7 @@ void reset_cpu_state(struct cpu *_cpu) {
 
 void free_cpu(struct cpu *_cpu) {
 	printf("[CPUZ16] unloading RAM\n");
-	free(_cpu->ram.cells);
+	free(_cpu->bus.cells);
 }
 
 #endif

@@ -6,4 +6,4 @@
 
 u16 *read_binary(char *file);
 
-void parse_bytecode(u16 *bytecode, instruction_set *isa, cpu *_cpu);
+void parse_bytecode(instruction_set *isa, cpu *_cpu);

@@ -2,13 +2,13 @@
 #define _UTIL_COMPILER_VALUES
 #endif
 
-#define NUM_CELLS 32768 /* there is 32768 cells of 16 bit values in 64 KiB */
+#define NUM_CELLS 16384 /* there is 32768 cells of 16 bit values in 64 KiB */
 #define MAGIC_SIZE 1 /* 1 magic cell would be enough */
 /* there is no support for MAGIC sizes > 1 */
 
 #define TOTAL_CELLS NUM_CELLS+MAGIC_SIZE
 
-#define MAX_ROM_SIZE 65536 /* CPUZ16 can't load more than 64 KiB of memory */
+#define MAX_ROM_SIZE 32768 /* CPUZ16 can't load more than 64 KiB of memory */
 
 #define MAGIC_VALUE 0xFF3A
 

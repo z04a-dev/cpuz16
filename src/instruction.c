@@ -259,7 +259,7 @@ static int ins_call(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	else {
 		u16 next_ins = _cpu->ins + 1;
 		push_stack(_cpu, &next_ins);
-		_cpu->ins = get_val1_from_cmd(_cpu, _cmd);
+		_cpu->ins = get_val1_from_cmd(_cpu, _cmd) + ROM_START;
 		return 0;
 	} 
 } 
@@ -289,7 +289,7 @@ static int ins_jmp(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 		printf("[PANIC] <%s> LABEL NOT FOUND\n", _cmd.val1.label);
 		return -1;
 	} else {
-		_cpu->ins = get_val1_from_cmd(_cpu, _cmd);
+		_cpu->ins = get_val1_from_cmd(_cpu, _cmd) + ROM_START;
 		return 0;
 	}
 } 
@@ -663,8 +663,8 @@ static void ins_lv(cpu *_cpu, cmd _cmd) {
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	// TODO
 	// ins_lv should be allowed for use on stack
-	assert(val2 <= RAM_SIZE-STACK_SIZE && "Segmentation fault: you can't access stack using lv instruction");
-	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->ram.cells[val2]);
+	assert(val2 <= BUS_SIZE-STACK_SIZE && "Segmentation fault: you can't access stack using lv instruction");
+	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->bus.cells[val2]);
 }
 
 static void ins_sv(cpu *_cpu, cmd _cmd) {
@@ -674,9 +674,9 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	if(_cmd.val2_type != T_VAL2_REG && _cmd.val2_type != T_VAL2_U16)
 		assert(0 && "ILL exception: in SV second arg must be u16 or registry");
 	u16 addr = get_val1_from_cmd(_cpu, _cmd);
-	assert(addr <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using sv instruction");
+	assert(addr <= BUS_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using sv instruction");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
-	_cpu->ram.cells[addr] = val2;
+	_cpu->bus.cells[addr] = val2;
 }
 
 static void ins_mul(cpu *_cpu, cmd _cmd) {

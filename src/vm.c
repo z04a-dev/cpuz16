@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "registry.h" 
 #include "lexer.h"
@@ -52,12 +53,13 @@ int main(int argc, char *argv[]) {
 	fclose(fp_check);
 	if (fp_check_val == MAGIC_VALUE) {
 		cpuz16.state = VM_BINARY;
+		// TODO
+		// reset vector
+		cpuz16.ins = ROM_START;
 		printf("[CPUZ16] Found MAGIC, starting BINARY mode...\n");
 		u16 *bytearray = read_binary(argv[1]);
-		parse_bytecode(bytearray, &isa, &cpuz16);
-		// TODO
-		// why free(), make it fancier
-		free(bytearray);
+		memcpy(&cpuz16.bus.cells[ROM_START], bytearray, ROM_SIZE);
+		parse_bytecode(&isa, &cpuz16);
 		goto end;
 	} 
 
@@ -66,6 +68,8 @@ int main(int argc, char *argv[]) {
 
 	// print_cpu_state(&cpuz16);
 
+	// TODO
+	// need to free code blocks and def blocks
 	code_blocks code = {.capacity = -1};
 	start_lexer(&isa, argv[1], &code);
 
@@ -77,6 +81,17 @@ int main(int argc, char *argv[]) {
 
 end:
 	// print_memory(&cpuz16);
+	// printf("STACK_SIZE: %d\n", STACK_SIZE);
+	// printf("IO_SIZE: %d\n", IO_SIZE);
+	// printf("\nRAM_SIZE: %d\n", RAM_SIZE);
+	// printf("RAM_START: %d\n", RAM_START);
+	// printf("ROM_START: %d\n", ROM_START);
+	// printf("ROM_SIZE: %d\n", ROM_SIZE);
+	// printf("\nBUS_SIZE: %d\n", BUS_SIZE);
+	// printf("\nIO[0x%04X->0x%04X]\n", 0, IO_SIZE);
+	// printf("RAM[0x%04X->0x%04X]\n", RAM_START, RAM_START+RAM_SIZE);
+	// printf("ROM[0x%04X->0x%04X]\n", ROM_START, BUS_SIZE);
+
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");
 	print_cpu_state(&cpuz16);

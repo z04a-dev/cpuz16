@@ -1,8 +1,12 @@
 ;; Primitive bubble sorting algorithm
 ;; interpreter-compatible
+;; a3 -> end of array
+;; rdx -> first value (1000)
 start:
-    mov a3, 1000;
-    mov rdx, a3;
+    ;; mov a3, #0428;
+    mov a3, #0428; 
+	mov rax, #0040;
+    mov rdx, 1000;
     add rdx, rdx;
     jmp whileless;
 end;
@@ -12,12 +16,13 @@ whileless:
     call nilreg;
     jmp sort;
 end;
+;; start of RAM is 0x0040
 nilreg:
     mov rax, 0;
     mov rbx, 0;
     mov rdx, 0;
-    mov a1, 0;
-    mov a2, 0;
+    mov a1, #0040;
+    mov a2, #0040;
     ret;
 end;
 

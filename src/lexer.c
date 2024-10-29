@@ -336,87 +336,6 @@ static bool check_for_start(code_blocks *_blocks) {
 	return false;
 }
 
-bool define_line(char *line, char *token) {
-	char *pAt = strchr(token, '@');
-	if (pAt == NULL || strlen(token) < 2)
-		return false;
-
-	char *name = &token[1];
-
-	define def = {.data_size = 0};
-	asprintf(&def.name, "%s", name);
-
-	token = strtok(NULL, " ");
-
-	if (strcmp(token, "imm") == 0) {
-		def.def_type = T_DEF_IMM;
-	} else if (strcmp(token, "ascii") == 0) {
-		def.def_type = T_DEF_ASCII;
-	} else if (strcmp(token, "data") == 0) {
-		def.def_type = T_DEF_DATA;
-	} else {
-		printf("panic at define_line\n");
-		exit(1);
-	}
-
-	token = strtok(NULL, " ");
-	if (strcmp(token, "=") != 0) {
-		printf("panic at define_line\n");
-		exit(1);
-	}
-
-	// printf("Define found -> ");
-	do {
-		token = strtok(NULL, " ");
-		if (token != NULL) {
-			// printf("%s ", token);
-			clear_token(token);
-			switch (def.def_type) {
-				case T_DEF_NULL:
-					// it already panicked if T_DEF_NULL
-					break;
-				case T_DEF_IMM:
-					if (is_token_hex(token)) {
-						token = &token[1];
-						def.value.imm = (u16)strtol(token, NULL, 16);
-					} else 
-						def.value.imm = (u16)atoi(token);
-					break;
-				case T_DEF_ASCII:
-					asm("nop;");
-					char *start_ptr = strchr(line, '"');
-					if (start_ptr == NULL) {
-						printf("Incorrect ASCII define\n");
-						exit(1);
-					}
-					char *end_ptr = strrchr(start_ptr+1, '"');
-					if (end_ptr == NULL) {
-						printf("Incorrect ASCII define\n");
-						exit(1);
-					}
-					*end_ptr = '\0';
-					asprintf(&def.value.ascii, "%s", start_ptr + 1);
-					goto out;
-					break;
-				case T_DEF_DATA:
-					break;
-			}
-		}
-	} while (token != NULL);
-out:
-	printf("\n");
-	printf("DEFINE: %s ", def.name);
-	printf("TYPE: %s ", def.def_type == T_DEF_IMM ? "IMM" : def.def_type == T_DEF_ASCII ? "ASCII" : "DATA");
-	if (def.def_type == T_DEF_ASCII)
-		printf("VALUE: %s\n", def.value.ascii);
-	else if (def.def_type == T_DEF_IMM)
-		printf("VALUE: %hu\n", def.value.imm);
-	else
-		printf("DATA NOT IMPLEMENTED\n");
-
-	return true;
-}
-
 // TODO implement error return
 void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks) {
 	if (access(asm_file, F_OK) != 0)
@@ -435,8 +354,6 @@ void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks)
 		asprintf(&t_line, "%s", line);
 		t_line = remove_start_whitespaces(t_line);
 		token = strtok(t_line, " ");
-		if (define_line(line, token))
-			continue;
 		pColumn = strrchr(t_line, ':');
 		if (pColumn == NULL || strlen(token) <= 2)
 			continue;

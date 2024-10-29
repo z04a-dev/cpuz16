@@ -5,24 +5,18 @@
 #define _STRUCT_IMPL
 
 #include <stdbool.h>
-#define STACK_SIZE 256 
-#define RAM_SIZE 32767
+#define BUS_SIZE 32768
 
-typedef struct define {
-	char *name;
-	enum{ T_DEF_NULL, T_DEF_IMM, T_DEF_ASCII, T_DEF_DATA} def_type;
-	union {
-		u16 imm;
-		char *ascii;
-		u16 *data;
-	} value;
-	u16 data_size;
-} define;
+#define STACK_SIZE 256
+#define IO_SIZE 64
 
-typedef struct define_block {
-	define *def;
-	unsigned int count;
-} define_block;
+#define RAM_SIZE 16384 - IO_SIZE
+#define RAM_START IO_SIZE
+
+#define ROM_START RAM_START + RAM_SIZE
+// TODO it doesn't calculate ROM_SIZE correctly for some reason
+// #define ROM_SIZE BUS_SIZE - ROM_START
+#define ROM_SIZE 16384
 
 typedef struct instruction {
 	u16 opcode;
@@ -85,7 +79,7 @@ typedef struct {
 typedef struct {
 	u16 *cells;
 	u16 capacity;
-} ram;
+} bus;
 
 #define return_pointer instruction_pointer
 
@@ -96,7 +90,7 @@ typedef enum {
 
 typedef struct cpu {
 	state state;
-	ram ram;
+	bus bus;
 	instruction_pointer ip; // for interpreting .asm
 	return_pointer rp; // for interpreting .asm
 	u16 *stack_value;
