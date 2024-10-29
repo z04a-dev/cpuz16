@@ -1,20 +1,19 @@
-;; simple crc8 (GSM-A) algorithm.
+;; simple crc16 (IBM-3740) algorithm.
 ;; works only in bytecode
 start:
-	;; get CRC-8 of 0xBEEF (48879)
+	;; get CRC-16 of 0xBEEF (48879)
 	mov rax, 48879; ;; put num to rax
-	mov a1, 0; ;; init value of crc is 0 (compliant with CRC-8\GSM-A)
-	call crc8;
+	mov a1, 65535; ;; init value of crc is 0xFFFF (compliant with CRC-16\IBM-3740)
+	call crc16;
 end;
 
-;; crc8 accepts num in rax
+;; crc16 accepts num in rax
 ;; return crc in a1
-crc8:
-	;; poly is 0x1D00 (7424) which is compliant with CRC-8\GSM-A
-	mov a3, 7424; ;; put poly value in a3
+crc16:
+	;; poly is 0x1021 (4129) which is compliant with CRC-16\IBM-3740
+	mov a3, 4129; ;; put poly value in a3
 	xor a1, rax; ;; xor crc with num
 	call bitwise;
-	ror a1, 8; ;; move from big endian to little endian
 	ret;
 end;
 
