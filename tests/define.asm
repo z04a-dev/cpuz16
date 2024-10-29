@@ -1,6 +1,6 @@
 ;; hmm..
 
-@SELF imm = 50;
+@SIZE imm = 50;
 @TEST imm = 170;
 
 ;; should it be \0 terminated?
@@ -15,7 +15,9 @@
 start:
 	inc rax;
 	inc rax;
-	mov rbx, @SELF;
-	mov x3, @TEST;
+	mov rbx, @SIZE;
+
+	;; I've lost 5 hours of debugging, because i put x3 here instead of a3.
+	mov a3, @TEST;
 	halt;
 end;

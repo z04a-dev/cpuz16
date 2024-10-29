@@ -336,8 +336,40 @@ static bool check_for_start(code_blocks *_blocks) {
 	return false;
 }
 
+bool define_line(char *line, char *token, define_block *def_block) {
+	char *pColumn = strchr(token, '@');
+	if (pColumn == NULL || strlen(token) < 2)
+		return false;
+
+	char *name = &token[1];
+
+	define def = {.name = name, .data_size = 0};
+
+	token = strtok(NULL, " ");
+
+	if (strcmp(token, "imm") == 0) {
+		def.def_type = T_DEF_IMM;
+	} else if (strcmp(token, "ascii") == 0) {
+		def.def_type = T_DEF_ASCII;
+	} else if (strcmp(token, "data") == 0) {
+		def.def_type = T_DEF_DATA;
+	} else {
+		printf("panic at define_line\n");
+		exit(1);
+	}
+
+	token = strtok(NULL, " ");
+	if (strcmp(token, "=") != 0) {
+		printf("panic at define_line\n");
+		exit(1);
+	}
+	
+	printf("Define found -> %s\n", line);
+	return true;
+}
+
 // TODO implement error return
-void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks) {
+void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks, define_block *out_def) {
 	if (access(asm_file, F_OK) != 0)
 		assert(0 && ".asm file does not exist");
 	printf("[Lexer] starting lexer at %s\n", asm_file);
@@ -354,6 +386,8 @@ void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks)
 		asprintf(&t_line, "%s", line);
 		t_line = remove_start_whitespaces(t_line);
 		token = strtok(t_line, " ");
+		if (define_line(line, token, out_def))
+			continue;
 		pColumn = strrchr(t_line, ':');
 		if (pColumn == NULL || strlen(token) <= 2)
 			continue;

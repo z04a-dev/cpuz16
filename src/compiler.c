@@ -234,6 +234,73 @@ void fix_bytecode(struct compile_bytecode *compiler) {
 	}
 }
 
+
+void fix_define(code_blocks blocks, define_block def_block) {
+	for (int i = 0; i < blocks.count; ++i) {
+		for (int ins = 0; ins < blocks.block[i].ins.count; ++ins) {
+			if (blocks.block[i].ins.cmds[ins].val1_type == T_VAL1_LABEL &&
+					blocks.block[i].ins.cmds[ins].val1.label[0] == '@') {
+				char *label = &blocks.block[i].ins.cmds[ins].val1.label[1];
+				for (int def = 0; def < def_block.count; ++def) {
+					if (strcmp(label, def_block.def[def].name) == 0) {
+						printf("%s\n", blocks.block[i].ins.cmds[ins].ins.token);
+						blocks.block[i].ins.cmds[ins].val1_type = T_VAL1_U16;
+						if (def_block.def[def].def_type == T_DEF_DATA ||
+								def_block.def[def].def_type == T_DEF_ASCII) {
+							printf("Skipping @%s in interpreter.\n", label);
+							blocks.block[i].ins.cmds[ins].val1.num = 0;
+							break;
+						}
+						blocks.block[i].ins.cmds[ins].val1.num = def_block.def[def].value.imm;
+						break;
+					}
+				}
+			}
+
+			if (blocks.block[i].ins.cmds[ins].val2_type == T_VAL2_LABEL &&
+					blocks.block[i].ins.cmds[ins].val2.label[0] == '@') {
+				char *label; 
+				asprintf(&label, "%s", &blocks.block[i].ins.cmds[ins].val2.label[1]);
+				printf("LABEL: %s\n", label);
+				for (int def = 0; def < def_block.count; ++def) {
+					printf("%s\n", def_block.def[def].name);
+					if (strcmp(label, def_block.def[def].name) == 0) {
+						blocks.block[i].ins.cmds[ins].val2_type = T_VAL2_U16;
+						if (def_block.def[def].def_type == T_DEF_DATA ||
+								def_block.def[def].def_type == T_DEF_ASCII) {
+							printf("Skipping @%s in interpreter.\n", label);
+							blocks.block[i].ins.cmds[ins].val2.num = 0;
+							break;
+						}
+						blocks.block[i].ins.cmds[ins].val2.num = def_block.def[def].value.imm;
+						printf("FOUND\n");
+						break;
+					}
+				}
+			}
+
+			if (blocks.block[i].ins.cmds[ins].val3_type == T_VAL3_LABEL &&
+					blocks.block[i].ins.cmds[ins].val3.label[0] == '@') {
+				char *label = &blocks.block[i].ins.cmds[ins].val3.label[1];
+				for (int def = 0; def < def_block.count; ++def) {
+					if (strcmp(label, def_block.def[def].name) == 0) {
+						blocks.block[i].ins.cmds[ins].val3_type = T_VAL3_U16;
+						if (def_block.def[def].def_type == T_DEF_DATA ||
+								def_block.def[def].def_type == T_DEF_ASCII) {
+							printf("Skipping @%s in interpreter.\n", label);
+							blocks.block[i].ins.cmds[ins].val3.num = 0;
+							break;
+						}
+						blocks.block[i].ins.cmds[ins].val3.num = def_block.def[def].value.imm;
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+
 void usage_panic(char *argv[]) {
 	printf("err: provide path to ins.asm\n");
 	printf("usage: %s <path/to/ins.asm>\n", argv[0]);
@@ -270,7 +337,18 @@ int main(int argc, char **argv) {
 	instruction_set isa = init_isa();
 
 	code_blocks code = {.capacity = -1};
+	define_block def_block = {0};
 	start_lexer(&isa, file, &code);
+
+	printf("DEF COUNT: %d\n", def_block.count);
+	for (int i = 0; i < def_block.count; ++i) {
+		if (def_block.def[i].def_type == T_DEF_IMM) {
+			printf("[%d] %s %d\n", i, def_block.def[i].name, def_block.def[i].value.imm);
+			printf("-----\n");
+		}
+	}
+
+	fix_define(code, def_block);
 	// there is no need to check for .start label
 	// because lexer will do it for us and panic
 
@@ -287,6 +365,8 @@ int main(int argc, char **argv) {
 			continue;
 		}
 	}
+
+	// exit(0);
 
 	printf("\n--------------------\n");
 	printf("First pass completed.\n");
