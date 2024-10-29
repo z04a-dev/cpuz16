@@ -93,10 +93,15 @@ static bool if_jmp(struct instruction instr) {
 		case 0x0007:
 			return true;
 			break;
-		case 0x0010 ... 0x0015:
-			return true;
-			break;
+
+		/* Range expressions are non-standard. */
+		// case 0x0010 ... 0x0015:
+		// 	return true;
+		// 	break;
 	}
+
+	if (instr.opcode >= 0x0010 && instr.opcode <= 0x0015)
+		return true;
 	return false;
 }
 
