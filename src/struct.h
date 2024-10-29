@@ -8,6 +8,22 @@
 #define STACK_SIZE 256 
 #define RAM_SIZE 32767
 
+typedef struct define {
+	char *name;
+	enum{ T_DEF_NULL, T_DEF_IMM, T_DEF_ASCII, T_DEF_DATA} def_type;
+	union {
+		u16 imm;
+		char *ascii;
+		u16 *data;
+	} value;
+	u16 data_size;
+} define;
+
+typedef struct define_block {
+	define *def;
+	unsigned int count;
+} define_block;
+
 typedef struct instruction {
 	u16 opcode;
 	const char *token;
@@ -43,7 +59,6 @@ typedef struct {
 		char *label;
 	} val3;
 } cmd;
-
 
 typedef struct {
 	cmd *cmds;
