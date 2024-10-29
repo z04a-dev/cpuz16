@@ -37,18 +37,11 @@ u16 get_registry_value(cpu *_cpu, u16 reg) {
 	return 0;
 }
 
-// static u16 get_value_from_address(cpu *_cpu, u16 address) {
-// 	assert(address < RAM_SIZE - STACK_SIZE + 1 && "Segmentation fault. Tried to access protected memory address.");
-// 	return _cpu->ram.cells[address];
-// }
-
 static u16 get_val1_from_cmd(cpu *_cpu, cmd _cmd) {
 	if (_cmd.val1_type == T_VAL1_U16)
 		return _cmd.val1.num;
 	else if (_cmd.val1_type == T_VAL1_REG)
 		return get_registry_value(_cpu, _cmd.val1.reg);
-	// else if (_cmd.val1_type == T_VAL1_ADDRESS)
-	// 	return get_value_from_address(_cpu, _cmd.val1.num);
 	return 0;
 }
 
@@ -57,8 +50,6 @@ static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 		return _cmd.val2.num;
 	else if (_cmd.val2_type == T_VAL2_REG)
 		return get_registry_value(_cpu, _cmd.val2.reg);
-	// else if (_cmd.val2_type == T_VAL2_ADDRESS)
-	// 	return get_value_from_address(_cpu, _cmd.val2.num);
 	return 0;
 }
 
@@ -68,8 +59,6 @@ static u16 get_val2_from_cmd(cpu *_cpu, cmd _cmd) {
 // 		return _cmd.val3.num;
 // 	else if (_cmd.val3_type == T_VAL3_REG)
 // 		return get_registry_value(_cpu, _cmd.val3.reg);
-// 	else if (_cmd.val3_type == T_VAL3_ADDRESS)
-// 		return get_value_from_address(_cpu, _cmd.val3.num);
 // 	return 0;
 // }
 
@@ -222,9 +211,6 @@ static int check_for_jmp(cmd _cmd) {
 			printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : "U16");
 			printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : "U16");
 
-			// printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
-			// printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
-			// printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
 			printf("[PANIC] wrong variable type while jumping\n");
 			return -1;
 		}
@@ -236,9 +222,6 @@ static int check_for_jmp(cmd _cmd) {
 			printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : "U16");
 			printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : "U16");
 			printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : "U16");
-			// printf("VAL1: %s\n", _cmd.val1_type == T_VAL1_LABEL ? "LABEL" : _cmd.val1_type == T_VAL1_ADDRESS ? "ADDRESS" : "U16");
-			// printf("VAL2: %s\n", _cmd.val2_type == T_VAL2_LABEL ? "LABEL" : _cmd.val2_type == T_VAL2_ADDRESS ? "ADDRESS" : "U16");
-			// printf("VAL3: %s\n", _cmd.val3_type == T_VAL3_LABEL ? "LABEL" : _cmd.val3_type == T_VAL3_ADDRESS ? "ADDRESS" : "U16");
 			printf("[PANIC] wrong variable type while jumping\n");
 			return -1;
 		}
@@ -499,6 +482,7 @@ static int ins_jle(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 }
 
 // TODO implement normal stack RET behaviour.
+// UPD: Implemented for bytecode execution.
 static void ins_ret(cpu *_cpu) {
 	if (DEBUG_PRINT) 
 		printf("RET\n");
@@ -655,7 +639,6 @@ static void ins_halt(cpu *_cpu, ...) {
 
 // most important one!
 static void ins_mov(cpu *_cpu, cmd _cmd) {
-	// if (_cmd.val1_type == T_VAL1_REG) {
 	if (DEBUG_PRINT) 
 		printf("MOV TO REG %s, %hu\n", reg_to_str(_cmd.val1.reg),
 				get_val2_from_cmd(_cpu, _cmd));
@@ -666,36 +649,11 @@ static void ins_mov(cpu *_cpu, cmd _cmd) {
 		case T_VAL2_U16: 
 			put_value_in_reg(_cpu, _cmd.val1.reg, get_val2_from_cmd(_cpu, _cmd));
 			break;
-		// case T_VAL2_ADDRESS:
-		// 	assert (_cmd.val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-		// 	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->ram.cells[_cmd.val2.num]);
-		// 	break;
 		default:
-			assert(0 && "well we shouldn't be here (INS_MOV)");
+			//assert(0 && "well we shouldn't be here (INS_MOV)");
+			assert(0 && "Null reference (INS_MOV)");
 			break;
 	}
-	// } else if (_cmd.val1_type == T_VAL1_ADDRESS) {
-	// 	if (DEBUG_PRINT) 
-	// 		printf("MOV TO ADDR %hu, %hu\n", _cmd.val1.num, 
-	// 				_cmd.val2_type == T_VAL2_ADDRESS ? _cmd.val2.num : get_val2_from_cmd(_cpu, _cmd));
-	// 	switch (_cmd.val2_type) {
-	// 		case T_VAL2_REG: 
-	// 			assert (_cmd.val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-	// 			_cpu->ram.cells[_cmd.val1.num] = get_val2_from_cmd(_cpu, _cmd);
-	// 			break;
-	// 		case T_VAL2_U16: 
-	// 			assert (_cmd.val1.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-	// 			_cpu->ram.cells[_cmd.val1.num] = get_val2_from_cmd(_cpu, _cmd);
-	// 			break;
-	// 		case T_VAL2_ADDRESS:
-	// 			assert (_cmd.val2.num < RAM_SIZE - STACK_SIZE + 1 && "mov address can't point to stack");
-	// 			_cpu->ram.cells[_cmd.val1.num] = _cpu->ram.cells[_cmd.val2.num];
-	// 			break;
-	// 		default:
-	// 			assert(0 && "well we shouldn't be here (INS_MOV)");
-	// 			break;
-	// 	}
-	// }
 }
 
 static void ins_lv(cpu *_cpu, cmd _cmd) {
@@ -726,14 +684,8 @@ static void ins_mul(cpu *_cpu, cmd _cmd) {
 		printf("MUL\n");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	u16 result = 0;
-	// if (_cmd.val1_type == T_VAL1_ADDRESS) {
-	// 	assert(_cmd.val1.num <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using mul instruction");
-	// 	result = _cpu->ram.cells[_cmd.val1.num] * val2;
-	// 	_cpu->ram.cells[_cmd.val1.num] = result;
-	// } ele {
 	result = get_registry_value(_cpu, _cmd.val1.reg) * val2;
 	put_value_in_reg(_cpu, _cmd.val1.reg, result);
-	// }
 }
 
 static void ins_div(cpu *_cpu, cmd _cmd) {
@@ -741,14 +693,8 @@ static void ins_div(cpu *_cpu, cmd _cmd) {
 		printf("DIV\n");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	u16 result = 0;
-	// if (_cmd.val1_type == T_VAL1_ADDRESS) {
-	// 	assert(_cmd.val1.num <= RAM_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using div instruction");
-	// 	result = _cpu->ram.cells[_cmd.val1.num] / val2;
-	// 	_cpu->ram.cells[_cmd.val1.num] = result;
-	// } else {
 	result = get_registry_value(_cpu, _cmd.val1.reg) / val2;
 	put_value_in_reg(_cpu, _cmd.val1.reg, result);
-	// }
 }
 
 /* ror and rol are logical bit shifting instructions, not arithmetical. */
