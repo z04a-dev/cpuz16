@@ -234,14 +234,18 @@ void fix_bytecode(struct compile_bytecode *compiler) {
 	}
 }
 
-
+// TODO
+// Currently falls through even if @DEFINE is not found in def_block
+// althrough fix_bytecode still stops it, but i would prefer to stop it here.
+// ----
+// also it looks awful.
 void fix_define(code_blocks blocks, define_block def_block) {
 	for (int i = 0; i < blocks.count; ++i) {
 		for (int ins = 0; ins < blocks.block[i].ins.count; ++ins) {
 			if (blocks.block[i].ins.cmds[ins].val1_type == T_VAL1_LABEL &&
 					blocks.block[i].ins.cmds[ins].val1.label[0] == '@') {
 				char *label = &blocks.block[i].ins.cmds[ins].val1.label[1];
-				for (int def = 0; def < def_block.count; ++def) {
+				for (size_t def = 0; def < def_block.count; ++def) {
 					if (strcmp(label, def_block.def[def].name) == 0) {
 						printf("%s\n", blocks.block[i].ins.cmds[ins].ins.token);
 						blocks.block[i].ins.cmds[ins].val1_type = T_VAL1_U16;
@@ -261,9 +265,7 @@ void fix_define(code_blocks blocks, define_block def_block) {
 					blocks.block[i].ins.cmds[ins].val2.label[0] == '@') {
 				char *label; 
 				asprintf(&label, "%s", &blocks.block[i].ins.cmds[ins].val2.label[1]);
-				printf("LABEL: %s\n", label);
-				for (int def = 0; def < def_block.count; ++def) {
-					printf("%s\n", def_block.def[def].name);
+				for (size_t def = 0; def < def_block.count; ++def) {
 					if (strcmp(label, def_block.def[def].name) == 0) {
 						blocks.block[i].ins.cmds[ins].val2_type = T_VAL2_U16;
 						if (def_block.def[def].def_type == T_DEF_DATA ||
@@ -273,7 +275,6 @@ void fix_define(code_blocks blocks, define_block def_block) {
 							break;
 						}
 						blocks.block[i].ins.cmds[ins].val2.num = def_block.def[def].value.imm;
-						printf("FOUND\n");
 						break;
 					}
 				}
@@ -282,7 +283,7 @@ void fix_define(code_blocks blocks, define_block def_block) {
 			if (blocks.block[i].ins.cmds[ins].val3_type == T_VAL3_LABEL &&
 					blocks.block[i].ins.cmds[ins].val3.label[0] == '@') {
 				char *label = &blocks.block[i].ins.cmds[ins].val3.label[1];
-				for (int def = 0; def < def_block.count; ++def) {
+				for (size_t def = 0; def < def_block.count; ++def) {
 					if (strcmp(label, def_block.def[def].name) == 0) {
 						blocks.block[i].ins.cmds[ins].val3_type = T_VAL3_U16;
 						if (def_block.def[def].def_type == T_DEF_DATA ||
@@ -338,12 +339,12 @@ int main(int argc, char **argv) {
 
 	code_blocks code = {.capacity = -1};
 	define_block def_block = {0};
-	start_lexer(&isa, file, &code);
+	start_lexer(&isa, file, &code, &def_block);
 
 	printf("DEF COUNT: %d\n", def_block.count);
-	for (int i = 0; i < def_block.count; ++i) {
+	for (size_t i = 0; i < def_block.count; ++i) {
 		if (def_block.def[i].def_type == T_DEF_IMM) {
-			printf("[%d] %s %d\n", i, def_block.def[i].name, def_block.def[i].value.imm);
+			printf("[%lu] %s %d\n", i, def_block.def[i].name, def_block.def[i].value.imm);
 			printf("-----\n");
 		}
 	}
@@ -390,7 +391,6 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < compiler.fixes_count; ++i) {
 		printf("[%d] -> %s (starts at: %d)\n", i, compiler.fixes[i].label, compiler.fixes[i].fix_ptr);
 	}
-	printf("\n");
 
 	fix_bytecode(&compiler);
 

@@ -18,7 +18,6 @@
 // #define ROM_SIZE BUS_SIZE - ROM_START
 #define ROM_SIZE 16384
 
-
 typedef struct define {
 	char *name;
 	enum{ T_DEF_NULL, T_DEF_IMM, T_DEF_ASCII, T_DEF_DATA} def_type;

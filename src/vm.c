@@ -71,7 +71,13 @@ int main(int argc, char *argv[]) {
 	// TODO
 	// need to free code blocks and def blocks
 	code_blocks code = {.capacity = -1};
-	start_lexer(&isa, argv[1], &code);
+	define_block def = {0};
+	start_lexer(&isa, argv[1], &code, &def);
+
+	if (def.count > 0) {
+		printf("@DEFINES are not supported in interpreter mode.\n");
+		return -1;
+	}
 
 	// print_code_blocks(&code);
 
@@ -80,7 +86,9 @@ int main(int argc, char *argv[]) {
 	start_interpreter(&cpuz16, &code);
 
 end:
-	// print_memory(&cpuz16);
+	// print_io(&cpuz16);
+	// print_ram(&cpuz16);
+	// print_rom(&cpuz16);
 	// printf("STACK_SIZE: %d\n", STACK_SIZE);
 	// printf("IO_SIZE: %d\n", IO_SIZE);
 	// printf("\nRAM_SIZE: %d\n", RAM_SIZE);
@@ -88,9 +96,9 @@ end:
 	// printf("ROM_START: %d\n", ROM_START);
 	// printf("ROM_SIZE: %d\n", ROM_SIZE);
 	// printf("\nBUS_SIZE: %d\n", BUS_SIZE);
-	// printf("\nIO[0x%04X->0x%04X]\n", 0, IO_SIZE);
-	// printf("RAM[0x%04X->0x%04X]\n", RAM_START, RAM_START+RAM_SIZE);
-	// printf("ROM[0x%04X->0x%04X]\n", ROM_START, BUS_SIZE);
+	printf("\nIO[0x%04X->0x%04X]\n", 0, IO_SIZE);
+	printf("RAM[0x%04X->0x%04X]\n", RAM_START, RAM_START+RAM_SIZE);
+	printf("ROM[0x%04X->0x%04X]\n", ROM_START, BUS_SIZE);
 
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");

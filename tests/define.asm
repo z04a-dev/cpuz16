@@ -1,6 +1,6 @@
 ;; hmm..
 
-@SIZE imm = 50;
+@SIZE imm = #beef;
 @TEST imm = 170;
 
 ;; should it be \0 terminated?
@@ -13,10 +13,7 @@
 @RAW_SIZE imm = 4;
 
 start:
-	inc rax;
-	inc rax;
 	mov rbx, @SIZE;
-
 	;; I've lost 5 hours of debugging, because i put x3 here instead of a3.
 	mov a3, @TEST;
 	halt;

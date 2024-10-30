@@ -5,7 +5,6 @@
 
 #include <time.h>
 
-
 #include "util/comp.h"
 
 #include <stdint.h>
@@ -26,8 +25,8 @@
 
 /* Clock works up to 3.335 mHz max. */
 /* Comment HZ to run at full-speed */
-// #define HZ 1875000.
-// #define HZ 50.
+#define HZ 1875000.
+// #define HZ 64.
 
 #define CLOCK SECS_TO_NS((1. / HZ))
 
@@ -37,7 +36,7 @@ static u16 *vm_create_bytearray() {
 		printf("PANIC: Failed to allocate byte array!\n");
 		exit(1);
 	}
-	printf("Allocating byte array<%d>...\n", byte_array_size); 
+	printf("Allocating byte array<%d bytes>...\n", byte_array_size); 
 
 	/* Using calloc, so array gets initialied with 0 */
 	// u16 *array = malloc(byte_array_size);

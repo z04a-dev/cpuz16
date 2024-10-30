@@ -2,10 +2,10 @@
 ;; interpreter-compatible
 ;; a3 -> end of array
 ;; rdx -> first value (1000)
+;; rax -> ptr to first value (i think)
 start:
-    ;; mov a3, #0428;
     mov a3, #0428; 
-	mov rax, #0040;
+    mov rax, #0040;
     mov rdx, 1000;
     add rdx, rdx;
     jmp whileless;

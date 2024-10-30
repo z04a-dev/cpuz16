@@ -179,7 +179,10 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				// 	_cmd->val1_conv_addr = true;
 				// 	str = &str[1];
 				// }
-				if (is_token_registry(str, &reg)) {
+				if (str[0] == '@') {
+					_cmd->val1_type = T_VAL1_LABEL;
+					asprintf(&_cmd->val1.label, "%s", str);
+				} else if (is_token_registry(str, &reg)) {
 					// TODO 
 					// maybe it's a good idea to allow incrementing IC?
 					// that will allow skipping instructions
@@ -200,7 +203,10 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				// 	_cmd->val2_conv_addr = true;
 				// 	str = &str[1];
 				// }
-				if (is_token_registry(str, &reg)) {
+				if (str[0] == '@') {
+					_cmd->val2_type = T_VAL2_LABEL;
+					asprintf(&_cmd->val2.label, "%s", str);
+				} else if (is_token_registry(str, &reg)) {
 					_cmd->val2_type = T_VAL2_REG;
 					_cmd->val2.reg = reg; 
 				} else if (is_token_hex(str)) {
@@ -218,7 +224,10 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				// 	str = &str[1];
 				// }
 				// if (_cmd->ins.opcode == CONDITIONAL JUMP) TODO
-				if (_cmd->ins.opcode == JEQ_OPCODE ||
+				if (str[0] == '@') {
+					_cmd->val3_type = T_VAL3_LABEL;
+					asprintf(&_cmd->val3.label, "%s", str);
+				} else if (_cmd->ins.opcode == JEQ_OPCODE ||
 						_cmd->ins.opcode == JNE_OPCODE ||
 						_cmd->ins.opcode == JGT_OPCODE ||
 						_cmd->ins.opcode == JLT_OPCODE ||
@@ -336,17 +345,38 @@ static bool check_for_start(code_blocks *_blocks) {
 	return false;
 }
 
+void def_block_append(define_block *def_block, define def) {
+	if (def_block->count == 0) {
+		def_block->count++;
+		def_block->def = malloc(def_block->count * sizeof(define));
+	} else {
+		def_block->count++;
+		def_block->def = realloc(def_block->def, def_block->count * sizeof(define));
+	}
+	def_block->def[def_block->count - 1] = def;
+}
+
+void data_append(define *def, u16 value) {
+	if (def->data_size == 0) {
+		def->data_size++;
+		def->value.data = malloc(def->data_size * sizeof(u16));
+	} else {
+		def->data_size++;
+		def->value.data = realloc(def->value.data, def->data_size * sizeof(u16));
+	}
+	def->value.data[def->data_size - 1] = value;
+}
+
 bool define_line(char *line, char *token, define_block *def_block) {
-	char *pColumn = strchr(token, '@');
-	if (pColumn == NULL || strlen(token) < 2)
+	char *pAt = strchr(token, '@');
+	if (pAt == NULL || strlen(token) < 2)
 		return false;
-
 	char *name = &token[1];
-
-	define def = {.name = name, .data_size = 0};
-
+	define def = {.data_size = 0};
+	asprintf(&def.name, "%s", name);
 	token = strtok(NULL, " ");
-
+	if (is_comment(token))
+		goto out;
 	if (strcmp(token, "imm") == 0) {
 		def.def_type = T_DEF_IMM;
 	} else if (strcmp(token, "ascii") == 0) {
@@ -354,17 +384,98 @@ bool define_line(char *line, char *token, define_block *def_block) {
 	} else if (strcmp(token, "data") == 0) {
 		def.def_type = T_DEF_DATA;
 	} else {
-		printf("panic at define_line\n");
+		printf("[PANIC] Did you forgot to provide TYPE in:\n[PANIC] %s", line);
 		exit(1);
 	}
-
 	token = strtok(NULL, " ");
+	if (is_comment(token))
+		goto out;
 	if (strcmp(token, "=") != 0) {
-		printf("panic at define_line\n");
+		printf("[PANIC] Did you forgot to provide = in:\n[PANIC] %s", line);
 		exit(1);
 	}
-	
-	printf("Define found -> %s\n", line);
+	char *start_ptr;
+	char *end_ptr;
+	// TODO
+	// Breaks when there is comment <;;> inside of @DEFINE
+	// smth like: @VALUE imm ;; = #beef;
+	do {
+		token = strtok(NULL, " ");
+		if (token != NULL) {
+			clear_token(token);
+			switch (def.def_type) {
+				case T_DEF_NULL:
+					// it already panicked if T_DEF_NULL
+					break;
+				case T_DEF_IMM:
+					if (is_token_hex(token)) {
+						token = &token[1];
+						def.value.imm = (u16)strtol(token, NULL, 16);
+					} else 
+						def.value.imm = (u16)atoi(token);
+					goto out;
+					break;
+				case T_DEF_ASCII:
+					asm("nop;");
+					start_ptr = strchr(line, '"');
+					if (start_ptr == NULL) {
+						printf("Incorrect ASCII define\n");
+						exit(1);
+					}
+					end_ptr = strrchr(start_ptr+1, '"');
+					if (end_ptr == NULL) {
+						printf("Incorrect ASCII define\n");
+						exit(1);
+					}
+					*end_ptr = '\0';
+					asprintf(&def.value.ascii, "%s", start_ptr + 1);
+					def.data_size = strlen(def.value.ascii);
+					goto out;
+					break;
+				case T_DEF_DATA:
+					asm("nop;");
+					start_ptr = strchr(line, '{') + 1;
+					end_ptr = strrchr(start_ptr, '}');
+					*end_ptr = '\0';
+					start_ptr = strtok(start_ptr, ",");
+					do {
+						clear_token(start_ptr);
+						start_ptr = remove_start_whitespaces(start_ptr);
+						if (is_token_hex(start_ptr)) {
+							start_ptr = &start_ptr[1];
+							data_append(&def, (u16)strtol(start_ptr, NULL, 16));
+						} else {
+							data_append(&def, (u16)atoi(start_ptr));
+						}
+						start_ptr = strtok(NULL, ",");
+					}	while (start_ptr != NULL);
+					goto out;
+					break;
+			}
+		}
+	} while (token != NULL);
+out:
+	if (def.def_type == T_DEF_NULL) {
+		printf("[PANIC]. Invalid @DEFINE:\n[PANIC] %s", line);
+		exit(1);
+	}
+	if (0) {
+		printf("\n");
+		printf("DEFINE: %s ", def.name);
+		printf("TYPE: %s ", def.def_type == T_DEF_IMM ? "IMM" : def.def_type == T_DEF_ASCII ? "ASCII" : "DATA");
+		if (def.def_type == T_DEF_ASCII)
+			printf("VALUE: %s\n", def.value.ascii);
+		else if (def.def_type == T_DEF_IMM)
+			printf("VALUE: %hu\n", def.value.imm);
+		else {
+			printf("SIZE: %hu ", def.data_size);
+			for (int i = 0; i < def.data_size; ++i) {
+				printf("%hu ", def.value.data[i]);
+			}
+			printf("\n");
+		}
+	}
+	def_block_append(def_block, def);
 	return true;
 }
 

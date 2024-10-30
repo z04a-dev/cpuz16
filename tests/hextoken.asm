@@ -8,4 +8,12 @@ start:
 	mov rdx, #FF00;
 	mov ins, 5;
 	mul ins, 6;
+	push rax;
+	push rbx;
+	push a1;
+	push a2;
+	push a3;
+	pop a3;
+	pop a2;
+	pop a1;
 end;

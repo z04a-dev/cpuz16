@@ -1,17 +1,25 @@
 ;; simple crc16 (IBM-3740) algorithm.
 ;; works only in bytecode
+@NUMBER imm = #beef; ;; lol
+@INIT imm = #FFFF;
+@POLY imm = #1021;
+@XOROUT imm = #0000;
+@IO_WRITE imm = #0000;
 start:
 	;; get CRC-16 of 0xBEEF (48879)
-	mov rax, #BEEF; ;; put num to rax
-	mov a1, #FFFF; ;; init value of crc is 0xFFFF (compliant with CRC-16\IBM-3740)
+	mov rax, @NUMBER; ;; put num to rax
+	mov a1, @INIT; ;; init value of crc is 0xFFFF (compliant with CRC-16\IBM-3740)
 	call crc16;
+	xor a1, @XOROUT;
+	mov a2, @IO_WRITE;
+	sv a2, a1;
 end;
 
 ;; crc16 accepts num in rax
 ;; return crc in a1
 crc16:
 	;; poly is 0x1021 (4129) which is compliant with CRC-16\IBM-3740
-	mov a3, #1021; ;; put poly value in a3
+	mov a3, @POLY; ;; put poly value in a3
 	xor a1, rax; ;; xor crc with num
 	call bitwise;
 	ret;

@@ -13,6 +13,8 @@
 
 #include "util/to_str.h"
 
+#include "registry.h"
+
 int DEBUG_PRINT = 0;
 
 int execute_code(cpu *_cpu, code_blocks *_code_blocks);
@@ -490,6 +492,8 @@ static void ins_ret(cpu *_cpu) {
 		u16 value = 0;
 		if (pop_stack(_cpu, &value) == -1) {
 			printf("[PANIC] pop_stack()\n");
+			// TODO
+			// kill execution
 		} 
 		_cpu->ins = value;
 	} else {
@@ -676,6 +680,20 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	u16 addr = get_val1_from_cmd(_cpu, _cmd);
 	assert(addr <= BUS_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using sv instruction");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
+	// TODO
+	// this is just for fun, major refactor needed
+	if (addr < RAM_START) {
+		FILE *fp = fopen("/dev/pts/7", "a");
+		switch(addr) {
+			case 0x0000:
+				fprintf(fp, "%016b ", val2);
+				break;
+			case 0x0001:
+				print_cpu_state_fp(fp, _cpu);
+				break;
+		}
+		fclose(fp);
+	}
 	_cpu->bus.cells[addr] = val2;
 }
 
