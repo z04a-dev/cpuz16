@@ -667,7 +667,7 @@ static void ins_lv(cpu *_cpu, cmd _cmd) {
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	// TODO
 	// ins_lv should be allowed for use on stack
-	assert(val2 <= BUS_SIZE-STACK_SIZE && "Segmentation fault: you can't access stack using lv instruction");
+	assert(!(val2 < ROM_START && val2 > ROM_START - STACK_SIZE) && "Segmentation fault: you can't access stack using lv instruction");
 	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->bus.cells[val2]);
 }
 
@@ -683,16 +683,29 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	// TODO
 	// this is just for fun, major refactor needed
 	if (addr < RAM_START) {
-		FILE *fp = fopen("/dev/pts/7", "a");
+		// FILE *fp = fopen("/dev/pts/7", "a");
 		switch(addr) {
 			case 0x0000:
-				fprintf(fp, "%016b ", val2);
+				// char c1 = val2 >> 8;
+				// char c2 = val2 & ((1 << 8) - 1);
+				// fprintf(_cpu->socket, "%c", c1);
+				// fprintf(_cpu->socket, "%c", c2);
+				fprintf(_cpu->socket, "%016b ", val2);
+				fflush(_cpu->socket);
 				break;
 			case 0x0001:
-				print_cpu_state_fp(fp, _cpu);
+				print_cpu_state_fp(_cpu->socket, _cpu);
+				break;
+			case 0x0002:
+				fprintf(_cpu->socket, "%c", val2);
+				fflush(_cpu->socket);
+				break;
+			case 0x0003:
+				fprintf(_cpu->socket, "%04X ", val2);
+				fflush(_cpu->socket);
 				break;
 		}
-		fclose(fp);
+		// fclose(fp);
 	}
 	_cpu->bus.cells[addr] = val2;
 }

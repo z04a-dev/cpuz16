@@ -16,6 +16,8 @@ test:
     call pushregs;
     call test2;
     call popregs;
+	;; Added halt; for bytecode compatibility
+	halt; 
 end;
 
 test2:

@@ -21,7 +21,14 @@
 
 void print_byte_array(u16 *array, u16 start, u16 end) {
 	u16 *p = &array[start];
+	u16 nil_count = 0;
 	for (int count = start; p < &array[end]; ++p, ++count) {
+		if (*p == 0x0000)
+			nil_count++;
+		else
+			nil_count = 0;
+		if (nil_count >= 3)
+			continue;
 		if (PRINT_AS_BINARY) {
 			if (count == 0 || count % 4 == 0)
 				printf("\n%05d ... %05d: ", count+1, count + 4);
@@ -31,7 +38,6 @@ void print_byte_array(u16 *array, u16 start, u16 end) {
 				printf("\n%05d ... %05d: ", count+1, count + 4);
 			printf("0x%04X ", *p);
 		}
-
 	}
 	printf("\n");
 }

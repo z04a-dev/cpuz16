@@ -26,7 +26,7 @@
 /* Clock works up to 3.335 mHz max. */
 /* Comment HZ to run at full-speed */
 #define HZ 1875000.
-// #define HZ 64.
+// #define HZ 300.
 
 #define CLOCK SECS_TO_NS((1. / HZ))
 

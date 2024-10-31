@@ -19,6 +19,12 @@ static void init_memory(cpu *_cpu) {
 struct cpu init_cpu(){
 	printf("[CPUZ16] initializing register stack...\n");
 	cpu _cpu = {0};
+	const char *socket = "/dev/pts/2";
+	_cpu.socket = fopen(socket, "a");
+	if (_cpu.socket == NULL) {
+		printf("[PANIC] Failed to open %s\n", socket);
+		exit(1);
+	}
 	init_memory(&_cpu);
 	return _cpu;
 }

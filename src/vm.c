@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "registry.h" 
-#include "lexer.h"
+#include "parser.h"
 
 #include "isa.h" /* includes struct.h */
 
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 		cpuz16.ins = ROM_START;
 		printf("[CPUZ16] Found MAGIC, starting BINARY mode...\n");
 		u16 *bytearray = read_binary(argv[1]);
-		memcpy(&cpuz16.bus.cells[ROM_START], bytearray, ROM_SIZE);
+		memcpy(&cpuz16.bus.cells[ROM_START], bytearray, ROM_SIZE * 2);
 		parse_bytecode(&isa, &cpuz16);
 		goto end;
 	} 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 end:
 	// print_io(&cpuz16);
 	// print_ram(&cpuz16);
-	// print_rom(&cpuz16);
+	print_rom(&cpuz16);
 	// printf("STACK_SIZE: %d\n", STACK_SIZE);
 	// printf("IO_SIZE: %d\n", IO_SIZE);
 	// printf("\nRAM_SIZE: %d\n", RAM_SIZE);
@@ -96,13 +96,15 @@ end:
 	// printf("ROM_START: %d\n", ROM_START);
 	// printf("ROM_SIZE: %d\n", ROM_SIZE);
 	// printf("\nBUS_SIZE: %d\n", BUS_SIZE);
-	printf("\nIO[0x%04X->0x%04X]\n", 0, IO_SIZE);
-	printf("RAM[0x%04X->0x%04X]\n", RAM_START, RAM_START+RAM_SIZE);
-	printf("ROM[0x%04X->0x%04X]\n", ROM_START, BUS_SIZE);
+	// printf("\nIO[0x%04X->0x%04X]\n", 0, IO_SIZE);
+	// printf("RAM[0x%04X->0x%04X]\n", RAM_START, RAM_START+RAM_SIZE);
+	// printf("ROM[0x%04X->0x%04X]\n", ROM_START, BUS_SIZE);
 
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");
 	print_cpu_state(&cpuz16);
+
+	fclose(cpuz16.socket);
 
 	return 0;
 }

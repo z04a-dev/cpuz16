@@ -2,6 +2,8 @@
 #define u16 unsigned short
 #endif
 
+#include <stdio.h>
+
 #define _STRUCT_IMPL
 
 #include <stdbool.h>
@@ -105,6 +107,7 @@ typedef enum {
 } state;
 
 typedef struct cpu {
+	FILE *socket; 
 	state state;
 	bus bus;
 	instruction_pointer ip; // for interpreting .asm

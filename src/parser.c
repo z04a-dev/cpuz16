@@ -371,7 +371,7 @@ bool define_line(char *line, char *token, define_block *def_block) {
 	char *pAt = strchr(token, '@');
 	if (pAt == NULL || strlen(token) < 2)
 		return false;
-	char *name = &token[1];
+	char *name = token;
 	define def = {.data_size = 0};
 	asprintf(&def.name, "%s", name);
 	token = strtok(NULL, " ");
