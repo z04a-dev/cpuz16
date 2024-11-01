@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	// need to free code blocks and def blocks
 	code_blocks code = {.capacity = -1};
 	define_block def = {0};
-	start_lexer(&isa, argv[1], &code, &def);
+	start_parser(&isa, argv[1], &code, &def);
 
 	if (def.count > 0) {
 		printf("@DEFINES are not supported in interpreter mode.\n");
@@ -103,8 +103,6 @@ end:
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");
 	print_cpu_state(&cpuz16);
-
-	fclose(cpuz16.socket);
 
 	return 0;
 }

@@ -348,11 +348,11 @@ int main(int argc, char **argv) {
 
 	code_blocks code = {.capacity = -1};
 	define_block def_block = {0};
-	start_lexer(&isa, file, &code, &def_block);
+	start_parser(&isa, file, &code, &def_block);
 
 	fix_define(code, def_block);
 	// there is no need to check for .start label
-	// because lexer will do it for us and panic
+	// because parser will do it for us and panic
 
 	printf("Code blocks: %d\n", code.count);
 

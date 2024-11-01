@@ -6,8 +6,8 @@
 #include "struct.h"
 #endif
 
-#ifndef _LEXER_IMPL_
-#define _LEXER_IMPL_
+#ifndef _PARSER_IMPL_
+#define _PARSER_IMPL_
 #include <unistd.h>
 #include <assert.h>
 #include <stdio.h>
@@ -20,9 +20,9 @@
 #include "util/to_str.h"
 #endif
 
-#define LEXER_DEBUG_FILE false // debug at parsing
-#define LEXER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
-#define LEXER_DEBUG_STACK false // print out stack 
+#define PARSER_DEBUG_FILE false // debug at parsing
+#define PARSER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
+#define PARSER_DEBUG_STACK false // print out stack 
 
 // TODO i guess i dont need REG_INS here
 // maybe i do...
@@ -291,7 +291,7 @@ static cmd _tokenize_str(instruction_set *_isa, char *str) {
 	// }
 
 #ifdef VM_BUILD
-	if (LEXER_DEBUG_FILE) {
+	if (PARSER_DEBUG_FILE) {
 		printf("line: %s ", DEBUG_STR);
 		debug_print_cmd(&_cmd);
 		// printf("\n");
@@ -312,7 +312,7 @@ static bool process_str(instruction_set *_isa, char *str, code_block *block) {
 	str = remove_start_whitespaces(str);
 	if (is_comment(str))
 		return true;
-	if (LEXER_DEBUG_FILE)
+	if (PARSER_DEBUG_FILE)
 		printf("[%d] ", block->ins.count);
 	cmd _cmd = _tokenize_str(_isa, str);
 	if (_cmd.ins.opcode == END_OPCODE)
@@ -480,10 +480,10 @@ out:
 }
 
 // TODO implement error return
-void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks, define_block *out_def) {
+void start_parser(instruction_set *_isa, char *asm_file, code_blocks *out_blocks, define_block *out_def) {
 	if (access(asm_file, F_OK) != 0)
 		assert(0 && ".asm file does not exist");
-	printf("[Lexer] starting lexer at %s\n", asm_file);
+	printf("[Parser] starting parser at %s\n", asm_file);
 
 	FILE* asm_f;
 	asm_f = fopen(asm_file, "r");
@@ -513,7 +513,7 @@ void start_lexer(instruction_set *_isa, char *asm_file, code_blocks *out_blocks,
 			}
 		} while (process_str(_isa, line, &block));
 		populate_code_blocks(block, out_blocks);
-		if (LEXER_DEBUG_FILE)
+		if (PARSER_DEBUG_FILE)
 			printf("--- %s ---\n", block.label);
 		if(t_line != NULL)
 			free(t_line);
@@ -567,7 +567,7 @@ void print_code_blocks(code_blocks *_blocks) {
 #ifdef VM_BUILD
 void start_interpreter(cpu *_cpu, code_blocks *_blocks) {
 	assert(_blocks->count != 0 && "No code blocks provided");	
-	if (LEXER_DEBUG_INSTRUCTIONS)
+	if (PARSER_DEBUG_INSTRUCTIONS)
 		ins_dbg_print();
 	for (u16 i = 0; i < _blocks->count; ++i) {
 		if (strcmp(_blocks->block[i].label, "start") == 0) {
@@ -579,7 +579,7 @@ void start_interpreter(cpu *_cpu, code_blocks *_blocks) {
 		}
 	}
 	free_blocks(_blocks);
-	if (LEXER_DEBUG_STACK)
+	if (PARSER_DEBUG_STACK)
 		print_stack(_cpu);
 }
 #endif

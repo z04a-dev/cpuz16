@@ -23,7 +23,7 @@ struct cpu init_cpu(){
 	_cpu.socket = fopen(socket, "a");
 	if (_cpu.socket == NULL) {
 		printf("[PANIC] Failed to open %s\n", socket);
-		exit(1);
+		// exit(1);
 	}
 	init_memory(&_cpu);
 	return _cpu;
@@ -147,6 +147,8 @@ void reset_cpu_state(struct cpu *_cpu) {
 
 void free_cpu(struct cpu *_cpu) {
 	printf("[CPUZ16] unloading RAM\n");
+	if (_cpu->socket != NULL)
+		fclose(_cpu->socket);
 	free(_cpu->bus.cells);
 }
 

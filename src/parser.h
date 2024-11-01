@@ -1,10 +1,10 @@
 
-#ifndef _LEXER_H_ 
-#define _LEXER_H_
+#ifndef _PARSER_H_ 
+#define _PARSER_H_
 #include "struct.h"
-// to execute code -> call start_lexer with path to .asm
-// after that call start_executing with initialized CPUZ16
-void start_lexer(instruction_set *_isa, char* asm_file, code_blocks *out_blocks, define_block *out_def);
+// to execute code -> call start_parser with path to .asm
+// after that call start_interpreter with initialized CPUZ16
+void start_parser(instruction_set *_isa, char* asm_file, code_blocks *out_blocks, define_block *out_def);
 void start_interpreter(cpu *_cpu, code_blocks *blocks);
 // TODO maybe delete it?
 // print_ins_set is not working at this commit.

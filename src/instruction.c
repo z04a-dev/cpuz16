@@ -682,7 +682,7 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	// TODO
 	// this is just for fun, major refactor needed
-	if (addr < RAM_START) {
+	if (addr < RAM_START && _cpu->socket != NULL) {
 		// FILE *fp = fopen("/dev/pts/7", "a");
 		switch(addr) {
 			case 0x0000:
