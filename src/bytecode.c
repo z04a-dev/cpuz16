@@ -25,8 +25,8 @@
 
 /* Clock works up to 3.335 mHz max. */
 /* Comment HZ to run at full-speed */
-#define HZ 1875000.
-// #define HZ 300.
+// #define HZ 1875000.
+#define HZ 9600.
 
 #define CLOCK SECS_TO_NS((1. / HZ))
 
@@ -196,18 +196,29 @@ void parse_bytecode(instruction_set *_isa, cpu *_cpu) {
 	long tp_a = tp.tv_nsec;
 	#endif
 
+	unsigned char c;
+	u16 IO_PTR = 0x0004;
 	for (;;) {
 		#ifdef HZ
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tp);
 		long tp_b = tp.tv_nsec;
 		if (tp_b - tp_a >= CLOCK) {
 			tp_a = tp_b;
+			if (_cpu->socket != -1) {
+				read(_cpu->socket, &c, 1);
+				_cpu->bus.cells[IO_PTR] = (u16)c;
+			}
 			if (execute_cmd(_isa, _cpu) != 0)
 				break;
+
 		} else if (tp_b - tp_a < 0) {
 			tp_a = tp_b;
 		}
 		#else
+		if (_cpu->socket != -1) {
+			read(_cpu->socket, &c, 1);
+			_cpu->bus.cells[IO_PTR] = (u16)c;
+		}
 		if (execute_cmd(_isa, _cpu) != 0)
 			break;
 		#endif

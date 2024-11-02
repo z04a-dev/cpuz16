@@ -682,7 +682,7 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	// TODO
 	// this is just for fun, major refactor needed
-	if (addr < RAM_START && _cpu->socket != NULL) {
+	if (addr < RAM_START && _cpu->socket != -1) {
 		// FILE *fp = fopen("/dev/pts/7", "a");
 		switch(addr) {
 			case 0x0000:
@@ -690,19 +690,22 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 				// char c2 = val2 & ((1 << 8) - 1);
 				// fprintf(_cpu->socket, "%c", c1);
 				// fprintf(_cpu->socket, "%c", c2);
-				fprintf(_cpu->socket, "%016b ", val2);
-				fflush(_cpu->socket);
+				// fprintf(_cpu->socket, "%016b ", val2);
+				write(_cpu->socket, &val2, 2);
+				// fflush(_cpu->socket);
 				break;
 			case 0x0001:
-				print_cpu_state_fp(_cpu->socket, _cpu);
+				// print_cpu_state_fp(_cpu->socket, _cpu);
 				break;
 			case 0x0002:
-				fprintf(_cpu->socket, "%c", val2);
-				fflush(_cpu->socket);
+				// fprintf(_cpu->socket, "%c", val2);
+				write(_cpu->socket, &val2, 1);
+				// fflush(_cpu->socket);
 				break;
 			case 0x0003:
-				fprintf(_cpu->socket, "%04X ", val2);
-				fflush(_cpu->socket);
+				write(_cpu->socket, &val2, 2);
+				// fprintf(_cpu->socket, "%04X ", val2);
+				// fflush(_cpu->socket);
 				break;
 		}
 		// fclose(fp);

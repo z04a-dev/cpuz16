@@ -8,6 +8,8 @@
 #include "struct.h"
 #include <stdlib.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static void init_memory(cpu *_cpu) {
 	_cpu->bus.cells = calloc(BUS_SIZE, sizeof(u16));
@@ -19,12 +21,14 @@ static void init_memory(cpu *_cpu) {
 struct cpu init_cpu(){
 	printf("[CPUZ16] initializing register stack...\n");
 	cpu _cpu = {0};
-	const char *socket = "/dev/pts/2";
-	_cpu.socket = fopen(socket, "a");
-	if (_cpu.socket == NULL) {
+	const char *socket = "/dev/pts/8";
+	_cpu.socket = open(socket, O_NOCTTY | O_NONBLOCK | O_CREAT | O_APPEND | O_RDWR);
+	if (_cpu.socket == -1) {
 		printf("[PANIC] Failed to open %s\n", socket);
 		// exit(1);
+	} else {
 	}
+
 	init_memory(&_cpu);
 	return _cpu;
 }
@@ -147,8 +151,8 @@ void reset_cpu_state(struct cpu *_cpu) {
 
 void free_cpu(struct cpu *_cpu) {
 	printf("[CPUZ16] unloading RAM\n");
-	if (_cpu->socket != NULL)
-		fclose(_cpu->socket);
+	if (_cpu->socket != -1)
+		close(_cpu->socket);
 	free(_cpu->bus.cells);
 }
 

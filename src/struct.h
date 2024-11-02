@@ -107,7 +107,7 @@ typedef enum {
 } state;
 
 typedef struct cpu {
-	FILE *socket; 
+	int socket; // fd of tty
 	state state;
 	bus bus;
 	instruction_pointer ip; // for interpreting .asm
