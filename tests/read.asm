@@ -15,10 +15,19 @@
 @BACKSPACE imm = 8;
 @DEL imm = 127;
 
+@WELCOME_MSG ascii = "Serial IO example by z04a for cpuz16";
+@WELCOME_MSG_SIZE imm = 36;
+
+@ROM_START imm = #4000;
 
 ;; a1 <- last character from serial
 
 start:
+	call CRLF;
+	mov rax, @WELCOME_MSG;
+	add rax, @ROM_START;
+	mov rbx, @WELCOME_MSG_SIZE;
+	call print;
 	;; init block
 	call NEWLINE;
 	mov a3, @READ_ADDR; ;; <- put read_address to a3;
@@ -106,5 +115,30 @@ write:
 end;
 
 return:
+	ret;
+end;
+
+;; yoinked from write-hello.asm
+;; rax <- pointer to acsii
+;; rbx <- size of ascii
+print:
+	push a3;
+	push rdx;
+	push a2; ;; a2 for character
+	mov a3, @WRITE_ADDR; ;; <- put read_address to a3;
+	mov rdx, rax;
+	add rdx, rbx; ;; rdx -> pos of last char
+	call _print;
+	pop a2;
+	pop rdx;
+	pop a3;
+	ret;
+end;
+
+_print:
+	lv a2, rax; ;; get character
+	sv a3, a2; ;; print from first to last-1 character
+	inc rax;
+	jlt rax, rdx, _print;
 	ret;
 end;
