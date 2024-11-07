@@ -28,8 +28,10 @@
 
 /* Clock works up to 3.335 mHz max. (After migrating to timerfd, maybe more, NOT TESTED) */
 /* Comment HZ to run at full-speed */
+/* UPD: Actually target something like 100kHz, that way you won't miss timerfd most of the time */
 // #define HZ 3335000.
-#define HZ 1875000.
+// #define HZ 1875000.
+// #define HZ 100000.
 // #define HZ 4210.
 // #define HZ 30.
 
@@ -249,7 +251,7 @@ void parse_bytecode(instruction_set *_isa, cpu *_cpu) {
 	for (;;) {
 		if (_cpu->socket.is_connected)
 			socket_checkdata(_cpu);
-		if (execute_cmd(_isa, _cpu) != 0)
+		if (execute_instr(_isa, _cpu) != 0)
 			break;
 	}
 #endif
