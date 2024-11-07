@@ -19,6 +19,8 @@
 #define PRINT_AS_BINARY true 
 #define READ_BINARY false
 
+// TODO
+// fix when it prints more than 6 values in a row
 void print_byte_array(u16 *array, u16 start, u16 end) {
 	u16 *p = &array[start];
 	u16 nil_count = 0;

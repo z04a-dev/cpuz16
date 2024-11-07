@@ -2,6 +2,9 @@ build/asmexe
 build/z16
 build/z16c
 thoughts.md
+thoughts.html
+README.html
+socket.sock
 output.bin
 build/output.bin
 other/*

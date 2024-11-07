@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 	socket_init(&cpuz16, SOCKET_PATH);
 
 	// that's cool!
-	// atexit(exit_func);
+	atexit(exit_func);
     signal(SIGINT, sig_exit);
     signal(SIGKILL, sig_exit);
     signal(SIGABRT, sig_exit); 
@@ -69,8 +69,6 @@ int main(int argc, char *argv[]) {
 	fclose(fp_check);
 	if (fp_check_val == MAGIC_VALUE) {
 		cpuz16.state = VM_BINARY;
-		// TODO
-		// reset vector
 		cpuz16.ins = ROM_START;
 		printf("[CPUZ16] Found MAGIC, starting BINARY mode...\n");
 		u16 *bytearray = read_binary(argv[1]);

@@ -148,11 +148,13 @@ void reset_cpu_state(struct cpu *_cpu) {
 }
 
 void free_cpu(struct cpu *_cpu) {
-	printf("[CPUZ16] unloading RAM\n");
+	printf("[CPUZ16] Unloading RAM\n");
 	if(_cpu->socket.is_connected) {
-		printf("[CPUZ16] Unlinking socket\n");
+		printf("[CPUZ16] Unlinking socket <%s>\n", _cpu->socket.sock_path);
 		close(_cpu->socket.epoll.plfd);
-		remove(_cpu->socket.sock_path);
+	}
+	if (access(_cpu->socket.sock_path, F_OK) == 0) {
+		unlink(_cpu->socket.sock_path);
 	}
 	free(_cpu->bus.cells);
 }
