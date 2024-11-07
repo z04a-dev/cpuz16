@@ -2,10 +2,6 @@
 #include "struct.h"
 #endif
 
-#include <time.h>
-
-#include "util/comp.h"
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,12 +9,16 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <sys/timerfd.h>
+#include <sys/epoll.h>
+#include <time.h>
 
 #ifndef _SOCKET_IMPL
 #include "socket.h"
 #endif
 
 #include "util/to_str.h"
+#include "util/comp.h"
 #include "instruction.h"
 
 #define SECS_TO_NS(SECS) (SECS * 1000000000.)
@@ -26,29 +26,28 @@
 #define DEBUG 0 // Print instructions.
 #define DEBUG_NOOP 0 // Don't execute instructions. (wouldn't HALT)
 
-/* Clock works up to 3.335 mHz max. */
+/* Clock works up to 3.335 mHz max. (After migrating to timerfd, maybe more, NOT TESTED) */
 /* Comment HZ to run at full-speed */
 // #define HZ 3335000.
 #define HZ 1875000.
 // #define HZ 4210.
-// #define HZ 150.
+// #define HZ 30.
 
 #define CLOCK SECS_TO_NS((1. / HZ))
 
 static u16 *vm_create_bytearray() {
 	unsigned int byte_array_size = (NUM_CELLS) * sizeof(u16);
 	if (!check_array_size(byte_array_size)) {
-		printf("PANIC: Failed to allocate byte array!\n");
+		printf("[PANIC] Failed to allocate byte array!\n");
 		exit(1);
 	}
-	printf("Allocating byte array<%d bytes>...\n", byte_array_size); 
+	printf("[BYTECODE] Allocating byte array<%d bytes>...\n", byte_array_size); 
 
 	/* Using calloc, so array gets initialied with 0 */
-	// u16 *array = malloc(byte_array_size);
 	u16 *array = calloc(NUM_CELLS, sizeof(u16));
 	if (array == NULL) {
-		printf("PANIC: Failed to allocate bytecode\n");
-		printf("PANIC: Are you out of memory? calloc() failed!\n");
+		printf("[PANIC] Failed to allocate bytecode\n");
+		printf("[PANIC] Are you out of memory? calloc() failed!\n");
 		exit(1);
 	}
 	return array;
@@ -71,8 +70,6 @@ u16 *read_binary(char *file) {
 			break;
 	}
 	fclose(fp);
-	// print_byte_array(array, 0, NUM_CELLS);
-	// destroy_byte_array(array);
 	return array;
 }
 
@@ -112,7 +109,7 @@ static bool if_jmp(struct instruction instr) {
 	return false;
 }
 
-bool execute_cmd(instruction_set *_isa, cpu *_cpu) {
+bool execute_instr(instruction_set *_isa, cpu *_cpu) {
 	u16 i = _cpu->ins;
 	u16 hint_count = 0;
 	u16 cell = _cpu->bus.cells[i];
@@ -194,32 +191,66 @@ bool execute_cmd(instruction_set *_isa, cpu *_cpu) {
 
 // Compiler decrements label pos by MAGIC_SIZE
 void parse_bytecode(instruction_set *_isa, cpu *_cpu) {
-	#ifdef HZ
-	printf("Running at: %f Hz\n", HZ);
-	struct timespec tp = {0};
-	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tp);
-	long tp_a = tp.tv_nsec;
-	#endif
+#ifdef HZ
+    int timer_fd = timerfd_create(CLOCK_MONOTONIC, 0);
+    if (timer_fd == -1) {
+        perror("timerfd_create");
+        exit(EXIT_FAILURE);
+    }
+
+    struct itimerspec new_value = {0};
+    new_value.it_value.tv_nsec = 1000; // start after 1 microsecond 
+    new_value.it_interval.tv_nsec = CLOCK; // clock
+
+    if (timerfd_settime(timer_fd, 0, &new_value, NULL) == -1) {
+		printf("[PANIC] Failed to create CPU Clock timerfd\n");
+        exit(1);
+    }
+
+    int epoll_fd = epoll_create(5);
+    if (epoll_fd == -1) {
+		printf("[PANIC] Failed to create CPU Clock epoll\n");
+        exit(1);
+    }
+
+    struct epoll_event ev;
+    ev.events = EPOLLIN; 
+    ev.data.fd = timer_fd;
+
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, timer_fd, &ev) == -1) {
+        perror("epoll_ctl");
+        exit(EXIT_FAILURE);
+    }
+
+	printf("[INFO] Running at: %f Hz\n", HZ);
 
 	for (;;) {
-		#ifdef HZ
-		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tp);
-		long tp_b = tp.tv_nsec;
-		if (tp_b - tp_a >= CLOCK) {
-			tp_a = tp_b;
+        int nfds = epoll_wait(epoll_fd, &ev, 1, -1); 
+        if (nfds == -1) {
+			printf("[PANIC] Failed CPU Clock.\n");
+			exit(1);
+        }
+		if (ev.events & EPOLLIN) {
+            uint64_t expirations;
+            ssize_t s = read(timer_fd, &expirations, sizeof(expirations));
+            if (s != sizeof(expirations)) {
+				printf("[PANIC] Failed CPU Clock.\n");
+                exit(1);
+            }
 			if (_cpu->socket.is_connected)
 				socket_checkdata(_cpu);
-			if (execute_cmd(_isa, _cpu) != 0)
+			if (execute_instr(_isa, _cpu) != 0)
 				break;
-
-		} else if (tp_b - tp_a < 0) {
-			tp_a = tp_b;
-		}
-		#else
+        }
+	}
+	close(timer_fd);
+    close(epoll_fd);
+#else
+	for (;;) {
 		if (_cpu->socket.is_connected)
 			socket_checkdata(_cpu);
 		if (execute_cmd(_isa, _cpu) != 0)
 			break;
-		#endif
 	}
+#endif
 }

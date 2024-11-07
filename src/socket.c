@@ -41,8 +41,6 @@ int socket_init(cpu *_cpu, char *path) {
 
 	unlink(path);
 
-	// TODO
-	// asprintf() leaks, change to memcpy
 	asprintf(&_cpu->socket.sock_path, "%s", path);
 
 	// SOCK_NONBLOCK is essential.
@@ -134,7 +132,7 @@ void socket_write(cpu *_cpu, u16 addr, u16 val) {
 			// writing to input is just reset 
 			break;
 		default:
-			printf("[WARN] %d port is not implemented for writing\n", addr);
+			printf("[WARN] 0x%04x port is not implemented for writing\n", addr);
 			break;
 	}
 }

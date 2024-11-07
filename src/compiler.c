@@ -111,7 +111,7 @@ void append_label(struct compile_bytecode *compiler, char* label, u16 start_poin
 }
 
 void append_fix(struct compile_bytecode *compiler, u16 fix_ptr, char *label) {
-	// TODO
+	// TODO:
 	// This is for debug only!
 	compiler->bytecode[fix_ptr] = 0xFFFF;
 	//
@@ -175,7 +175,7 @@ void append_bytearray(struct compile_bytecode *compiler, code_block block, u16 *
 			}
 		}
 
-		// TODO
+		// TODO:
 		// VAL3 always is label, so no need to check for everything else
 		// because it's always used in conditional jumps
 		// Appending VAL3
@@ -234,7 +234,7 @@ void fix_bytecode(struct compile_bytecode *compiler) {
 	}
 }
 
-// TODO
+// TODO:
 // Currently falls through even if @DEFINE is not found in def_block
 // althrough fix_bytecode still stops it, but i would prefer to stop it here.
 // ----
@@ -319,12 +319,12 @@ void usage_panic(char *argv[]) {
 }
 
 int main(int argc, char **argv) {
-	// TODO
+	// TODO:
 	// add argument parser for compiler (and for interpreter too)
 	if (argc == 1) {
 		usage_panic(argv);
 	}
-	// TODO
+	// TODO:
 	// Check for valid file, don't segfault!
 	char *file = argv[1];
 
@@ -411,14 +411,14 @@ int main(int argc, char **argv) {
 
 	printf("Successfully compiled...\n");
 	u16 written_bytes = (bytecode_ptr - 2) * 2;
-	printf("Written: %d bytes | Free: %d bytes\n", written_bytes, (MAX_ROM_SIZE - MAGIC_SIZE * 2) - written_bytes);
+	printf("Written: %d bytes | Free: %d bytes\n", written_bytes, MAX_ROM_SIZE - written_bytes);
 	printf("Saving binary...\n");
 	create_binary(compiler.bytecode, "output.bin");
 
 	goto clean;
 
 clean:
-	// TODO (check if ISA was correctly initialized)
+	// TODO:(check if ISA was correctly initialized)
 	free(isa.ins);
 
 	if (compiler.labels_count > 0)

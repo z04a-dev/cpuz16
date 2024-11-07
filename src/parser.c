@@ -1,7 +1,3 @@
-#ifdef VM_BUILD
-#include "instruction.h"
-#endif
-
 #ifndef _STRUCT_IMPL
 #include "struct.h"
 #endif
@@ -18,13 +14,14 @@
 
 #ifdef VM_BUILD
 #include "util/to_str.h"
+#include "instruction.h"
 #endif
 
 #define PARSER_DEBUG_FILE false // debug at parsing
 #define PARSER_DEBUG_INSTRUCTIONS false // enable execute_instructions debug function
 #define PARSER_DEBUG_STACK false // print out stack 
 
-// TODO i guess i dont need REG_INS here
+// TODO: i guess i dont need REG_INS here
 // maybe i do...
 // MAYBE use it as PC when executing bytecode?
 char *REG_NAMES[REGISTRY_COUNT] = {"rax",
@@ -135,7 +132,7 @@ static bool is_token_registry(char *token,int *reg) {
 
 static bool is_token_hex(char *token) {
 	if (token[0] == '$' && strlen(token) <= 5 && strlen(token) > 1) {
-		// TODO implement checking for bad values
+		// TODO: implement checking for bad values
 		// such as $00GJ
 		// 0 - 9 A - F
 		return true;
@@ -183,7 +180,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 					_cmd->val1_type = T_VAL1_LABEL;
 					asprintf(&_cmd->val1.label, "%s", str);
 				} else if (is_token_registry(str, &reg)) {
-					// TODO 
+					// TODO: 
 					// maybe it's a good idea to allow incrementing IC?
 					// that will allow skipping instructions
 					assert(!(_cmd->ins.opcode == INC_OPCODE && reg == INS_REGISTRY) && "You can't increment IC manually.");
@@ -223,7 +220,7 @@ static void _recognize_value(char *str, cmd *_cmd, int arg) {
 				// 	_cmd->val3_conv_addr = true;
 				// 	str = &str[1];
 				// }
-				// if (_cmd->ins.opcode == CONDITIONAL JUMP) TODO
+				// if (_cmd->ins.opcode == CONDITIONAL JUMP) TODO:
 				if (str[0] == '@') {
 					_cmd->val3_type = T_VAL3_LABEL;
 					asprintf(&_cmd->val3.label, "%s", str);
@@ -326,7 +323,7 @@ static bool check_for_start(code_blocks *_blocks) {
 		if (strcmp(_blocks->block[i].label, "start") == 0) {
 			// append HALT if it's not already present
 			// maybe we don't need it?....
-			// TODO
+			// TODO:
 			bool halt_presence = false;
 			for (u16 j = 0; j < _blocks->block[i].ins.count; ++j) {
 				if (_blocks->block[i].ins.cmds[j].ins.opcode == HALT_OPCODE) {
@@ -398,7 +395,7 @@ bool define_line(char *line, char *token, define_block *def_block) {
 	}
 	char *start_ptr;
 	char *end_ptr;
-	// TODO
+	// TODO:
 	// Breaks when there is comment <;;> inside of @DEFINE
 	// smth like: @VALUE imm ;; = $beef;
 	do {
@@ -421,12 +418,14 @@ bool define_line(char *line, char *token, define_block *def_block) {
 				case T_DEF_ASCII:
 					start_ptr = strchr(line, '"');
 					if (start_ptr == NULL) {
-						printf("Incorrect ASCII define\n");
+						printf("[PANIC] Incorrect ASCII define\n");
+						printf("[PANIC] Problem: %s\n", line);
 						exit(1);
 					}
 					end_ptr = strrchr(start_ptr+1, '"');
 					if (end_ptr == NULL) {
-						printf("Incorrect ASCII define\n");
+						printf("[PANIC] Incorrect ASCII define\n");
+						printf("[PANIC] Problem: %s\n", line);
 						exit(1);
 					}
 					*end_ptr = '\0';
@@ -462,6 +461,8 @@ out:
 		printf("[PANIC]. Invalid @DEFINE:\n[PANIC] %s", line);
 		exit(1);
 	}
+	// TODO:
+	// This is disabled, but can be used for debugging
 	if (0) {
 		printf("\n");
 		printf("DEFINE: %s ", def.name);
@@ -482,7 +483,7 @@ out:
 	return true;
 }
 
-// TODO implement error return
+// TODO: implement error return
 void start_parser(instruction_set *_isa, char *asm_file, code_blocks *out_blocks, define_block *out_def) {
 	if (access(asm_file, F_OK) != 0)
 		assert(0 && ".asm file does not exist");

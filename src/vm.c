@@ -70,9 +70,10 @@ int main(int argc, char *argv[]) {
 	if (fp_check_val == MAGIC_VALUE) {
 		cpuz16.state = VM_BINARY;
 		cpuz16.ins = ROM_START;
-		printf("[CPUZ16] Found MAGIC, starting BINARY mode...\n");
+		printf("[BYTECODE] Found MAGIC, starting BINARY mode...\n");
 		u16 *bytearray = read_binary(argv[1]);
 		memcpy(&cpuz16.bus.cells[ROM_START], bytearray, ROM_SIZE * 2);
+		free(bytearray);
 		parse_bytecode(&isa, &cpuz16);
 		goto end;
 	} 
@@ -82,8 +83,9 @@ int main(int argc, char *argv[]) {
 
 	// print_cpu_state(&cpuz16);
 
-	// TODO
+	// TODO:
 	// need to free code blocks and def blocks
+	// Maybe not? Valgrind doesn't care it seems
 	code_blocks code = {.capacity = -1};
 	define_block def = {0};
 	start_parser(&isa, argv[1], &code, &def);

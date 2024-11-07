@@ -6,7 +6,7 @@
 // after that call start_interpreter with initialized CPUZ16
 void start_parser(instruction_set *_isa, char* asm_file, code_blocks *out_blocks, define_block *out_def);
 void start_interpreter(cpu *_cpu, code_blocks *blocks);
-// TODO maybe delete it?
+// TODO: maybe delete it?
 // print_ins_set is not working at this commit.
 void print_ins_set();
 void print_code_blocks(code_blocks *blocks);

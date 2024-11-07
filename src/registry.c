@@ -25,7 +25,7 @@ struct cpu init_cpu(){
 	return _cpu;
 }
 
-// TODO
+// TODO:
 // fix when it prints more than 6 values in a row
 void print_rom(struct cpu *_cpu) {
 	u16 cols = 12;
@@ -47,7 +47,7 @@ void print_rom(struct cpu *_cpu) {
 	printf("\n");
 }
 
-// TODO
+// TODO:
 // fix when it prints more than 6 values in a row
 void print_io(struct cpu *_cpu) {
 	u16 cols = 12;
@@ -69,7 +69,7 @@ void print_io(struct cpu *_cpu) {
 	printf("\n");
 }
 
-// TODO
+// TODO:
 // fix when it prints more than 6 values in a row
 void print_ram(struct cpu *_cpu) {
 	u16 cols = 6;
@@ -130,9 +130,9 @@ void print_cpu_state(struct cpu *_cpu) {
 	printf("a3 : %5hu (0x%04x)\n", _cpu->a3 , _cpu->a3);
 	printf("ins: %5hu (0x%04x)\n", _cpu->ins , _cpu->ins);
 	printf("Stack pointer: %p\n", (void*)_cpu->stack_pointer);
-	// TODO return pointer
-	// TODO free/max RAM/stack
-	// TODO RAM pointer
+	// TODO: return pointer
+	// TODO: free/max RAM/stack
+	// TODO: RAM pointer
 	printf("Instruction counter: %llu\n\n", _cpu->ic);
 }
 
@@ -152,9 +152,10 @@ void free_cpu(struct cpu *_cpu) {
 	if(_cpu->socket.is_connected) {
 		printf("[CPUZ16] Unlinking socket <%s>\n", _cpu->socket.sock_path);
 		close(_cpu->socket.epoll.plfd);
-	}
-	if (access(_cpu->socket.sock_path, F_OK) == 0) {
-		unlink(_cpu->socket.sock_path);
+		if (access(_cpu->socket.sock_path, F_OK) == 0) {
+			unlink(_cpu->socket.sock_path);
+			free(_cpu->socket.sock_path);
+		}
 	}
 	free(_cpu->bus.cells);
 }

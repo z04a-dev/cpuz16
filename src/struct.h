@@ -19,7 +19,7 @@
 #define RAM_START IO_SIZE
 
 #define ROM_START RAM_START + RAM_SIZE
-// TODO it doesn't calculate ROM_SIZE correctly for some reason
+// TODO: it doesn't calculate ROM_SIZE correctly for some reason
 // #define ROM_SIZE BUS_SIZE - ROM_START
 #define ROM_SIZE 16384
 
@@ -61,7 +61,7 @@ typedef struct instruction_set {
 
 #define REGISTRY_COUNT 7
 
-// TODO
+// TODO:
 // Can i drop numbers in enum? T_VAL1_NULL -> T_VAL_NULL
 // that will make everything easier
 typedef struct {

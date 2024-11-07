@@ -487,25 +487,26 @@ static int ins_jle(cpu *_cpu, cmd _cmd, code_blocks *_code_blocks) {
 	return 0;
 }
 
-// TODO implement normal stack RET behaviour.
+// TODO: implement normal stack RET behaviour.
 // UPD: Implemented for bytecode execution.
-static void ins_ret(cpu *_cpu) {
+static int ins_ret(cpu *_cpu) {
 	if (DEBUG_PRINT) 
 		printf("RET\n");
 	if (_cpu->state == VM_BINARY) {
 		u16 value = 0;
 		if (pop_stack(_cpu, &value) == -1) {
 			printf("[PANIC] pop_stack()\n");
-			// TODO
-			// kill execution
+			return -1;
 		} 
 		_cpu->ins = value;
+		return 0;
 	} else {
 		assert(_cpu->rp.block != NULL && "Return Pointer is nil. Are you trying to return from jmp?");
 		_cpu->ip = _cpu->rp;
 		_cpu->rp.block = NULL;
 		_cpu->rp.ins = 0;
 	}
+	return 0;
 }
 
 static void ins_inc(cpu *_cpu, u16 reg) {
@@ -581,7 +582,7 @@ static void ins_dec(cpu *_cpu, u16 reg) {
 		case INS_REGISTRY:
 			if (DEBUG_PRINT)
 				printf("DEC INS\n");
-			// TODO
+			// TODO:
 			// Why? that's useful.
 			assert(0 && "You can't decrement instruction counter.");
 			break;
@@ -669,7 +670,7 @@ static void ins_lv(cpu *_cpu, cmd _cmd) {
 		printf("LV\n");
 	assert(_cmd.val1_type == T_VAL1_REG && "ILL exception: in LV first arg must be registry");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
-	// TODO
+	// TODO:
 	// ins_lv should be allowed for use on stack
 	assert(!(val2 < ROM_START && val2 > ROM_START - STACK_SIZE) && "Segmentation fault: you can't access stack using lv instruction");
 	put_value_in_reg(_cpu, _cmd.val1.reg, _cpu->bus.cells[val2]);
@@ -684,11 +685,11 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	u16 addr = get_val1_from_cmd(_cpu, _cmd);
 	assert(addr <= BUS_SIZE - STACK_SIZE && "Segmentation fault: you can't access stack using sv instruction");
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
-	// TODO
-	// this is just for fun, major refactor needed
-	if (addr < RAM_START && _cpu->socket.is_connected) {
+
+	/* Interacting with I/O */
+	if (addr < RAM_START && _cpu->socket.is_connected)
 		socket_write(_cpu, addr, val2);
-	}
+
 	_cpu->bus.cells[addr] = val2;
 }
 
@@ -748,7 +749,6 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			assert(_cmd->val1_type != T_VAL1_U16 && "[ERROR] You can't mov data to num!");
 			ins_mov(_cpu, *_cmd);
 			break;
-
 		case ADD_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_ADD\n");
@@ -763,7 +763,6 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			}
 			ins_sub(_cpu, *_cmd);
 			break;
-
 		case INC_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_INC\n");
@@ -778,7 +777,6 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			}
 			ins_dec(_cpu, _cmd->val1.reg); 
 			break;
-
 		case JMP_OPCODE:
 			if (_cpu->state == VM_BINARY) {
 				if (ins_jmp(_cpu, *_cmd, NULL) == -1) 
@@ -798,10 +796,8 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			return 0;
 			break;
 		case RET_OPCODE:
-			ins_ret(_cpu);
-			return 0;
+			return ins_ret(_cpu); // if fails, returns 1
 			break;
-
 		case OR_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_OR\n");
@@ -838,7 +834,6 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			}
 			ins_pop(_cpu, *_cmd);
 			break;
-
 		case HALT_OPCODE:
 			ins_halt(_cpu); 
 			return -1;
@@ -846,7 +841,6 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 		case END_OPCODE:
 			printf("[WARNING] something went wrong, we executed end; instruction during runtime.\n");
 			break;
-
 		case JEQ_OPCODE:
 			if (_cpu->state == VM_BINARY)
 				status = ins_jeq(_cpu, *_cmd, NULL);
@@ -937,14 +931,12 @@ int execute_instruction(cpu *_cpu, cmd *_cmd, code_blocks *_code_blocks) {
 			}
 			return 0;
 			break;
-
 		case LV_OPCODE:
 			ins_lv(_cpu, *_cmd);
 			break;
 		case SV_OPCODE:
 			ins_sv(_cpu, *_cmd);
 			break;
-
 		case MUL_OPCODE:
 			if(_cmd->val1_type == T_VAL1_U16) {
 				printf("[ERROR] Illegal values provided to INS_MUL\n");
@@ -982,7 +974,7 @@ int execute_interpreter(cpu *_cpu, code_blocks *_code_blocks) {
 	while (execute_instruction(_cpu, &_cpu->ip.block->ins.cmds[_cpu->ip.ins], _code_blocks) != -1 && 
 			_cpu->ip.ins < _cpu->ip.block->ins.count) {
 		_cpu->ic++; /* instruction counter + 1 */
-		// TODO
+		// TODO:
 		// what is this?
 		// it was used for debug long time ago. delete?
 		// printf("CPU INS: %hu\n", _cpu->ins);
