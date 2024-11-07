@@ -1,4 +1,3 @@
-#include <bits/time.h>
 #ifndef _STRUCT_IMPL
 #include "struct.h"
 #endif
@@ -15,6 +14,10 @@
 #include <assert.h>
 #include <unistd.h>
 
+#ifndef _SOCKET_IMPL
+#include "socket.h"
+#endif
+
 #include "util/to_str.h"
 #include "instruction.h"
 
@@ -25,8 +28,10 @@
 
 /* Clock works up to 3.335 mHz max. */
 /* Comment HZ to run at full-speed */
-// #define HZ 1875000.
-#define HZ 9600.
+// #define HZ 3335000.
+#define HZ 1875000.
+// #define HZ 4210.
+// #define HZ 150.
 
 #define CLOCK SECS_TO_NS((1. / HZ))
 
@@ -196,18 +201,14 @@ void parse_bytecode(instruction_set *_isa, cpu *_cpu) {
 	long tp_a = tp.tv_nsec;
 	#endif
 
-	unsigned char c;
-	u16 IO_PTR = 0x0004;
 	for (;;) {
 		#ifdef HZ
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tp);
 		long tp_b = tp.tv_nsec;
 		if (tp_b - tp_a >= CLOCK) {
 			tp_a = tp_b;
-			if (_cpu->socket != -1) {
-				read(_cpu->socket, &c, 1);
-				_cpu->bus.cells[IO_PTR] = (u16)c;
-			}
+			if (_cpu->socket.is_connected)
+				socket_checkdata(_cpu);
 			if (execute_cmd(_isa, _cpu) != 0)
 				break;
 
@@ -215,10 +216,8 @@ void parse_bytecode(instruction_set *_isa, cpu *_cpu) {
 			tp_a = tp_b;
 		}
 		#else
-		if (_cpu->socket != -1) {
-			read(_cpu->socket, &c, 1);
-			_cpu->bus.cells[IO_PTR] = (u16)c;
-		}
+		if (_cpu->socket.is_connected)
+			socket_checkdata(_cpu);
 		if (execute_cmd(_isa, _cpu) != 0)
 			break;
 		#endif

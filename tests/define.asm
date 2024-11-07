@@ -1,6 +1,6 @@
 ;; hmm..
 
-@SIZE imm = #beef;
+@SIZE imm = $beef;
 @TEST imm = 170;
 
 ;; should it be \0 terminated?
@@ -9,7 +9,7 @@
 @HELLO ascii = "Hello, World!";
 @HELLO_SIZE imm = 14;
 ;; RAW will get processed to memory pointer in ROM
-@RAW data = {#beef, 5000, #AAAA, #FFFF};
+@RAW data = {$beef, 5000, $AAAA, $FFFF};
 @RAW_SIZE imm = 4;
 
 start:

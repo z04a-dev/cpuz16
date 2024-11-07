@@ -4,8 +4,8 @@
 ;; rdx -> first value (1000)
 ;; rax -> ptr to first value (i think)
 start:
-    mov a3, #0428; 
-    mov rax, #0040;
+    mov a3, $0428; 
+    mov rax, $0040;
     mov rdx, 1000;
     add rdx, rdx;
     jmp whileless;
@@ -21,8 +21,8 @@ nilreg:
     mov rax, 0;
     mov rbx, 0;
     mov rdx, 0;
-    mov a1, #0040;
-    mov a2, #0040;
+    mov a1, $0040;
+    mov a2, $0040;
     ret;
 end;
 

@@ -21,18 +21,12 @@ static void init_memory(cpu *_cpu) {
 struct cpu init_cpu(){
 	printf("[CPUZ16] initializing register stack...\n");
 	cpu _cpu = {0};
-	const char *socket = "/dev/pts/8";
-	_cpu.socket = open(socket, O_NOCTTY | O_NONBLOCK | O_CREAT | O_APPEND | O_RDWR);
-	if (_cpu.socket == -1) {
-		printf("[PANIC] Failed to open %s\n", socket);
-		// exit(1);
-	} else {
-	}
-
 	init_memory(&_cpu);
 	return _cpu;
 }
 
+// TODO
+// fix when it prints more than 6 values in a row
 void print_rom(struct cpu *_cpu) {
 	u16 cols = 12;
 	printf("----- ROM (size: %hu cells) contents -----\n", ROM_SIZE);
@@ -53,6 +47,8 @@ void print_rom(struct cpu *_cpu) {
 	printf("\n");
 }
 
+// TODO
+// fix when it prints more than 6 values in a row
 void print_io(struct cpu *_cpu) {
 	u16 cols = 12;
 	printf("----- IO (size: %hu cells) contents -----\n", IO_SIZE);
@@ -73,6 +69,8 @@ void print_io(struct cpu *_cpu) {
 	printf("\n");
 }
 
+// TODO
+// fix when it prints more than 6 values in a row
 void print_ram(struct cpu *_cpu) {
 	u16 cols = 6;
 	u16 count = 0;
@@ -151,8 +149,11 @@ void reset_cpu_state(struct cpu *_cpu) {
 
 void free_cpu(struct cpu *_cpu) {
 	printf("[CPUZ16] unloading RAM\n");
-	if (_cpu->socket != -1)
-		close(_cpu->socket);
+	if(_cpu->socket.is_connected) {
+		printf("[CPUZ16] Unlinking socket\n");
+		close(_cpu->socket.epoll.plfd);
+		remove(_cpu->socket.sock_path);
+	}
 	free(_cpu->bus.cells);
 }
 

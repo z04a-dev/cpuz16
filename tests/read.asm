@@ -1,7 +1,8 @@
 ;; program that reads characters from tty, and prints them back.
 
-@READ_ADDR imm = #0004;
-@WRITE_ADDR imm = #0003;
+@WRITE_ADDR imm = $0000;
+@READ_ADDR imm = $0001;
+@COUNT_ADDR imm = $0002;
 
 @CHAR_Q imm = 113;
 
@@ -15,14 +16,28 @@
 @BACKSPACE imm = 8;
 @DEL imm = 127;
 
+@ACK imm = 6;
+
 @WELCOME_MSG ascii = "Serial IO example by z04a for cpuz16";
 @WELCOME_MSG_SIZE imm = 36;
 
-@ROM_START imm = #4000;
+@ROM_START imm = $4000;
 
 ;; a1 <- last character from serial
 
 start:
+	lv rax, @COUNT_ADDR;
+	jgt rax, 0, start_data;
+	jmp start;
+	halt;
+end;
+
+start_data:
+	call data;
+	jmp start;
+end;
+
+data:
 	call CRLF;
 	mov rax, @WELCOME_MSG;
 	add rax, @ROM_START;
@@ -32,7 +47,7 @@ start:
 	call NEWLINE;
 	mov a3, @READ_ADDR; ;; <- put read_address to a3;
 	call poll;
-	halt;
+	ret;
 end;
 
 NEWLINE:
@@ -66,13 +81,17 @@ end;
 
 ;; if rax == 1, then character received
 poll:
+	;; check if any connections exist
+	lv rdx, @COUNT_ADDR;
+	jeq rdx, 0, quit;
+	;; someone connected
 	call read;
 	jne rax, 1, poll;
 	mov rax, @RAM_COUNTER;
 	lv rdx, @RAM_COUNTER;
 	inc rdx;
 	sv rax, rdx;
-	jeq a1, @CHAR_Q, quit;
+	jeq a1, @CHAR_Q, quit_on_q;
 	jeq a1, @CR, poll;
 	jeq a1, @BACKSPACE, BACKSPACE;
 	jeq a1, @DEL, BACKSPACE;
@@ -82,25 +101,31 @@ poll:
 	jmp poll;
 end;
 
-quit:
+quit_on_q:
 	lv rax, @RAM_COUNTER;
 	dec rax; ;; don't count 'q'
+	halt;
+end;
+
+quit:
 	ret;
 end;
 
 ;; a2 <- temporary for character
 read:
-	lv a2, @READ_ADDR; ;; <- read
-	jeq a2, 0, return;
-	jeq a2, a1, return;
+	lv a1, @READ_ADDR; ;; <- read
+	jeq a1, 0, return;
+	jeq a1, @ACK, return;
+	mov rax, @READ_ADDR;
+	sv rax, 0; ;; reset read addr
 	;; character received
 	mov rax, 1; ;; <- indicate that we received char
-	mov a1, a2; ;; <- push character from temporary registry
-	jeq a2, @CR, read_newline;
+	jeq a1, @LF, read_newline;
 	jmp return;
 end;
 
 read_newline:
+	mov rax, 0; ;; drop received char indicator
 	call NEWLINE;
 	jmp return;
 end;
@@ -109,7 +134,6 @@ write:
 	push a3;
 	mov a3, @WRITE_ADDR;
 	sv a3, a1; ;; <- write to serial
-	sv a3, 0; ;; <- reset serial
 	pop a3;
 	jmp return;
 end;

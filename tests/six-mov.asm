@@ -3,6 +3,6 @@ start:
     mov rbx, rax;
 
     ;; Address evaluation is deprecated.
-    ;; mov #00FA, 515;
-    ;; mov a1, #00FA;
+    ;; mov $00FA, 515;
+    ;; mov a1, $00FA;
 end;

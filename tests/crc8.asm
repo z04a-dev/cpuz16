@@ -1,9 +1,9 @@
 ;; simple crc8 (GSM-A) algorithm.
 ;; works only in bytecode
-@VALUE imm = #beef;
-@INIT imm = #0000;
-@POLY imm = #1D00;
-@XOROUT imm = #0000;
+@VALUE imm = $beef;
+@INIT imm = $0000;
+@POLY imm = $1D00;
+@XOROUT imm = $0000;
 start:
 	;; get CRC-8 of 0xBEEF (48879)
 	mov rax, @VALUE; ;; put num to rax
@@ -33,7 +33,7 @@ end;
 cmp:
 	mov rdx, a1;
 	;; check if MSB (most significant bit) is set.
-	and rdx, #8000; ;; rdx & 0x8000
+	and rdx, $8000; ;; rdx & 0x8000
 	jne rdx, 0, rdxjne; ;; if (crc & 0x8000) != 0
 	rol a1, 1; ;; else crc <<= 1
 	ret;

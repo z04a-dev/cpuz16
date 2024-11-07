@@ -10,6 +10,8 @@
 #define INS_REGISTRY 0x06 // 0b110
 #define HINT_FLAG    0x07 // 0b111
 
+// TODO
+// Delete this.
 // #define RAX_REGISTRY 0b000
 // #define RBX_REGISTRY 0b001
 // #define RDX_REGISTRY 0b010

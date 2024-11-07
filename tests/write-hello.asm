@@ -1,9 +1,11 @@
 ;; first program to interact with I/O
 
-@WRITE_PORT imm = #0000; ;; fprintf to /dev/pts/7
-@RAISE_CPU_STATE imm = #0001; ;; print_cpu_state to /dev/pts/7
-@CHAR_PORT imm = #0002;
-@HEX_PORT imm = #0003;
+;; Broken. CHAR_PORT, HEX_PORT, RAISE_CPU_STATE ports are not supported.
+
+@WRITE_PORT imm = $0000; ;; fprintf to /dev/pts/7
+@RAISE_CPU_STATE imm = $0001; ;; print_cpu_state to /dev/pts/7
+@CHAR_PORT imm = $0002;
+@HEX_PORT imm = $0003;
 @H imm = 72;
 @E imm = 69;
 @L imm = 76;
@@ -99,6 +101,10 @@ _print:
 end;
 
 start:
+	halt;
+end;
+
+broken_start:
 	mov a1, @CHAR_PORT;
 	;;mov a1, @WRITE_PORT;
 	mov rax, @START_ROM;
@@ -109,7 +115,7 @@ start:
 	halt;
 	;; print cpu state
 	;; mov a1, @RAISE_CPU_STATE;
-	;; sv a1, #FFFF;
+	;; sv a1, $FFFF;
 	halt;
 end;
 

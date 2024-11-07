@@ -4,6 +4,11 @@
 
 make -B
 
+echo "Please, be warned! test.sh wasn't updated for working with sockets"
+echo "This may fail."
+echo "Sleeping for 3 seconds..."
+sleep 3;
+
 if [[ $? != 0 ]]; then
 	echo "Failed to build"
 else

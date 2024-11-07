@@ -134,9 +134,9 @@ static bool is_token_registry(char *token,int *reg) {
 }
 
 static bool is_token_hex(char *token) {
-	if (token[0] == '#' && strlen(token) <= 5 && strlen(token) > 1) {
+	if (token[0] == '$' && strlen(token) <= 5 && strlen(token) > 1) {
 		// TODO implement checking for bad values
-		// such as #00GJ
+		// such as $00GJ
 		// 0 - 9 A - F
 		return true;
 	}
@@ -398,7 +398,7 @@ bool define_line(char *line, char *token, define_block *def_block) {
 	char *end_ptr;
 	// TODO
 	// Breaks when there is comment <;;> inside of @DEFINE
-	// smth like: @VALUE imm ;; = #beef;
+	// smth like: @VALUE imm ;; = $beef;
 	do {
 		token = strtok(NULL, " ");
 		if (token != NULL) {

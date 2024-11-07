@@ -1,7 +1,7 @@
 start:
     ;; start at $0000
-    mov rax, #0040
-    mov a1, #001f
+    mov rax, $0040
+    mov a1, $001f
     jmp whileless;
 end;
 

@@ -5,11 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "registry.h" 
 #include "parser.h"
 
 #include "isa.h" /* includes struct.h */
+
+#ifndef _SOCKET_IMPL
+#include "socket.h"
+#endif
 
 #ifndef _BYTECODE_IMPL
 #include "bytecode.h"
@@ -36,6 +41,13 @@ void exit_func(void) {
 	free_isa();
 }
 
+void sig_exit(int sig) {
+	exit_func();
+	exit(sig);
+}
+
+#define SOCKET_PATH "./socket.sock"
+
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		usage_panic(argv);
@@ -43,9 +55,13 @@ int main(int argc, char *argv[]) {
 
 	isa = init_isa();
 	cpuz16 = init_cpu();
+	socket_init(&cpuz16, SOCKET_PATH);
 
 	// that's cool!
-	atexit(exit_func);
+	// atexit(exit_func);
+    signal(SIGINT, sig_exit);
+    signal(SIGKILL, sig_exit);
+    signal(SIGABRT, sig_exit); 
 
 	FILE *fp_check = fopen(argv[1], "r");
 	u16 fp_check_val;

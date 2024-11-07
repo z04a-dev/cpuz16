@@ -4,8 +4,9 @@
 
 ;; half broken
 
-@READ_ADDR imm = #0004;
-@WRITE_ADDR imm = #0002;
+;; No implementation of COUNT_PORT.
+@WRITE_ADDR imm = $0000;
+@READ_ADDR imm = $0001;
 
 @CHAR_Q imm = 113;
 

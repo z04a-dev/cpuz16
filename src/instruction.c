@@ -15,6 +15,10 @@
 
 #include "registry.h"
 
+#ifndef _SOCKET_IMPL
+#include "socket.h"
+#endif
+
 int DEBUG_PRINT = 0;
 
 int execute_code(cpu *_cpu, code_blocks *_code_blocks);
@@ -682,33 +686,8 @@ static void ins_sv(cpu *_cpu, cmd _cmd) {
 	u16 val2 = get_val2_from_cmd(_cpu, _cmd);
 	// TODO
 	// this is just for fun, major refactor needed
-	if (addr < RAM_START && _cpu->socket != -1) {
-		// FILE *fp = fopen("/dev/pts/7", "a");
-		switch(addr) {
-			case 0x0000:
-				// char c1 = val2 >> 8;
-				// char c2 = val2 & ((1 << 8) - 1);
-				// fprintf(_cpu->socket, "%c", c1);
-				// fprintf(_cpu->socket, "%c", c2);
-				// fprintf(_cpu->socket, "%016b ", val2);
-				write(_cpu->socket, &val2, 2);
-				// fflush(_cpu->socket);
-				break;
-			case 0x0001:
-				// print_cpu_state_fp(_cpu->socket, _cpu);
-				break;
-			case 0x0002:
-				// fprintf(_cpu->socket, "%c", val2);
-				write(_cpu->socket, &val2, 1);
-				// fflush(_cpu->socket);
-				break;
-			case 0x0003:
-				write(_cpu->socket, &val2, 2);
-				// fprintf(_cpu->socket, "%04X ", val2);
-				// fflush(_cpu->socket);
-				break;
-		}
-		// fclose(fp);
+	if (addr < RAM_START && _cpu->socket.is_connected) {
+		socket_write(_cpu, addr, val2);
 	}
 	_cpu->bus.cells[addr] = val2;
 }
@@ -1003,6 +982,9 @@ int execute_interpreter(cpu *_cpu, code_blocks *_code_blocks) {
 	while (execute_instruction(_cpu, &_cpu->ip.block->ins.cmds[_cpu->ip.ins], _code_blocks) != -1 && 
 			_cpu->ip.ins < _cpu->ip.block->ins.count) {
 		_cpu->ic++; /* instruction counter + 1 */
+		// TODO
+		// what is this?
+		// it was used for debug long time ago. delete?
 		// printf("CPU INS: %hu\n", _cpu->ins);
 		// printf("CPU RBX: %hu\n", _cpu->rbx);
 		// printf("CPU RAX: %hu\n", _cpu->rax);
