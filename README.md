@@ -2,22 +2,35 @@
 ***CPUZ16***
 
 All registers are unsigned. Supports two modes: interpreter and binary.
-Has in-house compiler.
+Has in-house compiler. In-house terminal is in development.
 
-## registers:
+## Registers:
+
 - rax (16 bit)
 - rdx (16 bit)
 - rbx (16 bit)
 - a1, a2, a3 (16 bit)
 - ins (16 bit) <- program counter (for bytecode execution)
 - ic (64 bit) <- instruction counter (debugging purposes only)
-- stack (512 x 16 bit)
 - stack pointer (points to next available cell)
 - IP <- instruction pointer (what will be executed) (only used in interpreter)
 - RP <- return pointer (points to jmp+1 in caller function) (only used in interpreter)
 
-## RAM
-RAM size is 65535 bytes (32767 16 bit cells), at the end of which 512 bytes (256 16 bit cells) are allocated to stack
+## Bus
+
+CPU Bus consists of three sections:
+
+- I/O
+    - Starts at 0x0000
+    - Ends at 0x003F
+- RAM
+    - Starts at 0x0040
+    - Ends at 0x3FFF
+- ROM
+    - Starts at 0x4000
+    - Ends at 0x8000
+
+At the end of RAM, 256 cells are allocated for stack.
 
 ## instructions
 - #0000 nop <- do nothing
@@ -74,7 +87,7 @@ This will create `z16` (VM) and `z16c` (compiler) in build/ directory.
 
 There is a number of working (and non working) tests in tests/ directory, so you can try to run them.
 
-## compiler and bytecode
+## Compiler and bytecode
 
 CPUZ16 has in-house compiler called z16c, that is being compiled with all targets.
 
@@ -97,12 +110,70 @@ Note:
 It's only possible to do nested subroutine calls using bytecode execution.
 Raw interpreter would not work.
 
-## code blocks
+## Value types
+
+z16 supports hexadecimal and decimal values (binary not supported yet):
+- Hexadecimal values are prefixed with `$` (limited to $FFFF)
+
+    `mov a1, $beef;`
+
+- Decimal values are not prefixed. (limited to 65535)
+
+    `mov a1, 50;`
+
+## CPUZ16 preprocessor
+
+Currently z16 supports primitive preprocessed define macros.
+
+Define types:
+- IMM (Immediate value) 
+
+    Returns decimal u16 value
+
+    `@EXAMPLE imm = 5;`
+
+    `@EXAMPLE imm = $BEEF;`
+
+- ASCII or ASCIIZ (sequence of bytes (asciiz is null-terminated))
+
+    Returns memory address of first element.
+
+    `@EXAMPLE ascii = "Hello, World!";`
+
+    `@EXAMPLE asciiz = "Hello, World!";`
+
+- DATA (sequence of u16 values)
+
+    Returns memory address of first element.
+
+    `@EXAMPLE data = {$FAFA, 5050, $BEEF};`
+
+To interact with defined value in your code -> use `@` prefix.
+
+    `mov a1, @EXAMPLE;`
+
+## I/O
+
+Currently z16 spawns `socket.sock` in `pwd` directory, which can be used for IPC.
+
+Predefined ports are:
+- `0x0000` Write port
+- `0x0001` Input port
+- `0x0002` Count port (how many terminals are connected)
+
+Of course you can define your own ports in `src/socket.c`.
+
+To interact with `socket.sock` you will need special program (will be released soon).
+
+If you want to try it out now, please message me @z04a-dev.
+
+## Code blocks
+
 every .asm requires start: entry point
 
 you can define 65535 code blocks (including start:)
 
-it's possible to jump between code blocks using jmp (not possible to jump into start:)
+it's possible to jump between code blocks using jmp 
 
 HOWTO:
 
@@ -120,7 +191,7 @@ example:
 end;
 ```
 
-## example .asm (old, needs fixing)
+## Example .asm (old, needs fixing)
 
 ```
 ;; comment
@@ -156,4 +227,9 @@ fn:
 end;
 
 ```
+
+## Contribution
+
+Pull requests are welcome, although this project is simply for learning purposes,
+so it can be abandoned!
 

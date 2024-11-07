@@ -20,7 +20,7 @@ static instruction_set variadic_populate_ins(int count, ...) {
 }
 
 instruction_set init_isa() {
-	return variadic_populate_ins(28 /* <- DONT FORGET TO UPDATE */,
+	return variadic_populate_ins(28 /* <- DONT FORGET TO UPDATE (32 MAX) */,
 					   CLITERAL(ins) {.opcode = NOP_OPCODE, .token = "nop"},
 					   CLITERAL(ins) {.opcode = MOV_OPCODE, .token = "mov"},
 
@@ -60,6 +60,5 @@ instruction_set init_isa() {
 					   /* bitshift ISA extension */
 					   CLITERAL(ins) {.opcode = ROR_OPCODE, .token = "ror",},
 					   CLITERAL(ins) {.opcode = ROL_OPCODE, .token = "rol",});
-
 }
 #endif

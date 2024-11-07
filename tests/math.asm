@@ -12,8 +12,8 @@ start:
     halt;
 
     ;; Address evaluation is deprecated.
-    ;;  mov #0007, 504;
-    ;;  mul #0007, 50;
-    ;;  div #0007, 2;
+    ;;  mov $0007, 504;
+    ;;  mul $0007, 50;
+    ;;  div $0007, 2;
     ;;  halt;
 end;

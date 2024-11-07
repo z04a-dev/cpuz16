@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "lexer.h"
+#include "parser.h"
 #include "isa.h"
 
 #include "util/comp.h"
@@ -96,17 +96,17 @@ void read_binary(char *file) {
 
 
 
-void append_label(struct compile_bytecode *compiler, code_block block, u16 start_pointer) {
+void append_label(struct compile_bytecode *compiler, char* label, u16 start_pointer) {
 	if (compiler->labels_count == 0) {
 		compiler->labels_count++;
 		compiler->labels = malloc(compiler->labels_count * sizeof(struct compile_label));
 		compiler->labels[compiler->labels_count - 1].start_ptr = start_pointer;
-		compiler->labels[compiler->labels_count - 1].label = block.label;
+		compiler->labels[compiler->labels_count - 1].label = label;
 	} else {
 		compiler->labels_count++;
 		compiler->labels = realloc(compiler->labels, compiler->labels_count * sizeof(struct compile_label));
 		compiler->labels[compiler->labels_count - 1].start_ptr = start_pointer;
-		compiler->labels[compiler->labels_count - 1].label = block.label;
+		compiler->labels[compiler->labels_count - 1].label = label;
 	}
 }
 
@@ -206,7 +206,7 @@ void find_start(struct compile_bytecode *compiler, code_blocks *blocks, u16 *sta
 		if (strcmp(blocks->block[i].label, "start") == 0) {
 			u16 start = *start_pointer;
 			append_bytearray(compiler, blocks->block[i], start_pointer);
-			append_label(compiler, blocks->block[i], start);
+			append_label(compiler, blocks->block[i].label, start);
 		} else continue;
 	}
 }
@@ -232,6 +232,84 @@ void fix_bytecode(struct compile_bytecode *compiler) {
 			}
 		}
 	}
+}
+
+// TODO
+// Currently falls through even if @DEFINE is not found in def_block
+// althrough fix_bytecode still stops it, but i would prefer to stop it here.
+// ----
+// also it looks awful.
+void fix_define(code_blocks blocks, define_block def_block) {
+	for (int i = 0; i < blocks.count; ++i) {
+		for (int ins = 0; ins < blocks.block[i].ins.count; ++ins) {
+			if (blocks.block[i].ins.cmds[ins].val1_type == T_VAL1_LABEL &&
+					blocks.block[i].ins.cmds[ins].val1.label[0] == '@') {
+				char *label = blocks.block[i].ins.cmds[ins].val1.label;
+				for (size_t def = 0; def < def_block.count; ++def) {
+					if (strcmp(label, def_block.def[def].name) == 0) {
+						printf("%s\n", blocks.block[i].ins.cmds[ins].ins.token);
+						if (def_block.def[def].def_type == T_DEF_IMM) {
+							blocks.block[i].ins.cmds[ins].val1_type = T_VAL1_U16;
+							blocks.block[i].ins.cmds[ins].val1.num = def_block.def[def].value.imm;
+						}
+						break;
+					}
+				}
+			}
+
+			if (blocks.block[i].ins.cmds[ins].val2_type == T_VAL2_LABEL &&
+					blocks.block[i].ins.cmds[ins].val2.label[0] == '@') {
+				char *label = blocks.block[i].ins.cmds[ins].val2.label; 
+				for (size_t def = 0; def < def_block.count; ++def) {
+					if (strcmp(label, def_block.def[def].name) == 0) {
+						if (def_block.def[def].def_type == T_DEF_IMM) {
+							blocks.block[i].ins.cmds[ins].val2_type = T_VAL2_U16;
+							blocks.block[i].ins.cmds[ins].val2.num = def_block.def[def].value.imm;
+						}
+						break;
+					}
+				}
+			}
+
+			if (blocks.block[i].ins.cmds[ins].val3_type == T_VAL3_LABEL &&
+					blocks.block[i].ins.cmds[ins].val3.label[0] == '@') {
+				char *label = blocks.block[i].ins.cmds[ins].val3.label;
+				for (size_t def = 0; def < def_block.count; ++def) {
+					if (strcmp(label, def_block.def[def].name) == 0) {
+						if (def_block.def[def].def_type == T_DEF_IMM) {
+							blocks.block[i].ins.cmds[ins].val3_type = T_VAL3_U16;
+							blocks.block[i].ins.cmds[ins].val3.num = def_block.def[def].value.imm;
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+void append_define(struct compile_bytecode *compiler, define def, u16 *def_start, u16 *code_end) {
+	u16 define_ptr = *def_start - def.data_size; 
+	if (define_ptr <= *code_end) {
+		printf("[PANIC] @define block exceeded code block\n");
+		printf("[PANIC] Please shrink your code.\n");
+		exit(1);
+	}
+	for (size_t i = 0; i < def.data_size; ++i) {
+		switch (def.def_type) {
+			case T_DEF_ASCIIZ:
+			case T_DEF_ASCII:
+				compiler->bytecode[define_ptr + i] = def.value.ascii[i];
+				break;
+			case T_DEF_DATA:
+				compiler->bytecode[define_ptr + i] = def.value.data[i];
+				break;
+			default:
+				break;
+		}
+	}
+	*def_start = define_ptr;
+	append_label(compiler, def.name, define_ptr);
 }
 
 void usage_panic(char *argv[]) {
@@ -270,9 +348,12 @@ int main(int argc, char **argv) {
 	instruction_set isa = init_isa();
 
 	code_blocks code = {.capacity = -1};
-	start_lexer(&isa, file, &code);
+	define_block def_block = {0};
+	start_parser(&isa, file, &code, &def_block);
+
+	fix_define(code, def_block);
 	// there is no need to check for .start label
-	// because lexer will do it for us and panic
+	// because parser will do it for us and panic
 
 	printf("Code blocks: %d\n", code.count);
 
@@ -283,10 +364,23 @@ int main(int argc, char **argv) {
 		if (strcmp(code.block[i].label, "start") != 0) {
 			u16 start = bytecode_ptr;
 			append_bytearray(&compiler, code.block[i], &bytecode_ptr);
-			append_label(&compiler, code.block[i], start);
+			append_label(&compiler, code.block[i].label, start);
 			continue;
 		}
 	}
+
+	// move ascii and data blocks to bytearray
+	u16 def_start = TOTAL_CELLS;
+	for (size_t i = 0; i < def_block.count; ++i) {
+		if (def_block.def[i].def_type == T_DEF_DATA ||
+				def_block.def[i].def_type == T_DEF_ASCII ||
+				def_block.def[i].def_type == T_DEF_ASCIIZ) {
+			printf("APPENDING DEFINE %s\n", def_block.def[i].name);
+			append_define(&compiler, def_block.def[i], &def_start, &bytecode_ptr); 
+		}
+	}
+
+	bytecode_ptr += TOTAL_CELLS - def_start;
 
 	printf("\n--------------------\n");
 	printf("First pass completed.\n");
@@ -298,7 +392,7 @@ int main(int argc, char **argv) {
 
 	printf("start pointer %d\n", bytecode_ptr);
 
-	print_byte_array(compiler.bytecode, 0, bytecode_ptr + 1);
+	print_byte_array(compiler.bytecode, 0, TOTAL_CELLS);
 
 	printf("---------------\n");
 	printf("Number of labels: %d\n", compiler.labels_count);
@@ -310,16 +404,14 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < compiler.fixes_count; ++i) {
 		printf("[%d] -> %s (starts at: %d)\n", i, compiler.fixes[i].label, compiler.fixes[i].fix_ptr);
 	}
-	printf("\n");
 
 	fix_bytecode(&compiler);
 
-	print_byte_array(compiler.bytecode, 0, bytecode_ptr + 1);
+	print_byte_array(compiler.bytecode, 0, TOTAL_CELLS);
 
 	printf("Successfully compiled...\n");
 	u16 written_bytes = (bytecode_ptr - 2) * 2;
 	printf("Written: %d bytes | Free: %d bytes\n", written_bytes, (MAX_ROM_SIZE - MAGIC_SIZE * 2) - written_bytes);
-	// TODO FIX
 	printf("Saving binary...\n");
 	create_binary(compiler.bytecode, "output.bin");
 

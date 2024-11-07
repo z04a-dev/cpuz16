@@ -8,12 +8,14 @@
 #include "struct.h"
 #include <stdlib.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static void init_memory(cpu *_cpu) {
-	_cpu->ram.cells = calloc(RAM_SIZE + 1, sizeof(u16));
-	_cpu->stack_value = &_cpu->ram.cells[RAM_SIZE - STACK_SIZE + 1];
+	_cpu->bus.cells = calloc(BUS_SIZE, sizeof(u16));
+	_cpu->stack_value = &_cpu->bus.cells[ROM_START - STACK_SIZE];
 	_cpu->stack_pointer = _cpu->stack_value;
-	assert(_cpu->ram.cells != NULL && "buy ram");
+	assert(_cpu->bus.cells != NULL && "buy ram");
 }
 
 struct cpu init_cpu(){
@@ -23,21 +25,99 @@ struct cpu init_cpu(){
 	return _cpu;
 }
 
-void print_memory(struct cpu *_cpu) {
-	u16 cols = 6;
-	printf("----- RAM (size: %hu cells) contents -----\n", RAM_SIZE);
-	for (u16 i = 0; i < RAM_SIZE - STACK_SIZE + 1; ++i) {
-		if (i % cols == 0 && i != 0)
+// TODO
+// fix when it prints more than 6 values in a row
+void print_rom(struct cpu *_cpu) {
+	u16 cols = 12;
+	printf("----- ROM (size: %hu cells) contents -----\n", ROM_SIZE);
+	u16 nil_count = 0;
+	u16 count = 0;
+	for (u16 i = ROM_START; i < BUS_SIZE; ++i, ++count) {
+		if (_cpu->bus.cells[i] == 0x0000)
+			nil_count++;
+		else
+			nil_count = 0;
+		if (nil_count >= 3)
+			continue;
+		if (count % cols == 0 && count != 0)
 			printf("\n");
-		printf("[0x%04x]:0x%04x ", i, _cpu->ram.cells[i]);
-	}
-	printf("\n----- STACK (size: %hu cells) contents -----\n", STACK_SIZE);
-	for (int i = RAM_SIZE - STACK_SIZE + 1; i < RAM_SIZE + 1; ++i) {
-		if (i % cols == 0 && i != RAM_SIZE - STACK_SIZE - 1)
-			printf("\n");
-		printf("[0x%04x]:0x%04x ", i, _cpu->ram.cells[i]);
+		printf("[0x%04x]:0x%04x ", i, _cpu->bus.cells[i]);
+		count++;
 	}
 	printf("\n");
+}
+
+// TODO
+// fix when it prints more than 6 values in a row
+void print_io(struct cpu *_cpu) {
+	u16 cols = 12;
+	printf("----- IO (size: %hu cells) contents -----\n", IO_SIZE);
+	u16 nil_count = 0;
+	u16 count = 0;
+	for (u16 i = 0x0000; i < IO_SIZE; ++i, ++count) {
+		if (_cpu->bus.cells[i] == 0x0000)
+			nil_count++;
+		else
+			nil_count = 0;
+		if (nil_count >= 3)
+			continue;
+		if (count % cols == 0 && count != 0)
+			printf("\n");
+		printf("[0x%04x]:0x%04x ", i, _cpu->bus.cells[i]);
+		count++;
+	}
+	printf("\n");
+}
+
+// TODO
+// fix when it prints more than 6 values in a row
+void print_ram(struct cpu *_cpu) {
+	u16 cols = 6;
+	u16 count = 0;
+	u16 nil_count = 0;
+	printf("----- RAM (size: %hu cells) contents -----\n", RAM_SIZE);
+	for (u16 i = RAM_START; i < (RAM_START + RAM_SIZE) - STACK_SIZE; ++i) {
+		if (_cpu->bus.cells[i] == 0x0000)
+			nil_count++;
+		else
+			nil_count = 0;
+		if (nil_count >= 3)
+			continue;
+		if (count % cols == 0 && count != 0)
+			printf("\n");
+		printf("[0x%04x]:0x%04x ", i, _cpu->bus.cells[i]);
+		count++;
+	}
+	count = 0;
+	nil_count = 0;
+	printf("\n----- STACK (size: %hu cells) contents -----\n", STACK_SIZE);
+	for (int i = (RAM_START + RAM_SIZE) - STACK_SIZE; i < RAM_START + RAM_SIZE; ++i) {
+		if (_cpu->bus.cells[i] == 0x0000)
+			nil_count++;
+		else
+			nil_count = 0;
+		if (nil_count >= 3) {
+			continue;
+		}
+		if (count % cols == 0 && count != 0)
+			printf("\n");
+		printf("[0x%04x]:0x%04x ", i, _cpu->bus.cells[i]);
+		count++;
+	}
+	printf("\n");
+}
+
+void print_cpu_state_fp(FILE *fp, struct cpu *_cpu) {
+	fprintf(fp, "CPUZ16 info:\r\n");
+	fprintf(fp, "rax: %5hu (0x%04x)\r\n", _cpu->rax, _cpu->rax);
+	fprintf(fp, "rbx: %5hu (0x%04x)\r\n", _cpu->rbx, _cpu->rbx);
+	fprintf(fp, "rdx: %5hu (0x%04x)\r\n", _cpu->rdx, _cpu->rdx);
+	fprintf(fp, "a1 : %5hu (0x%04x)\r\n", _cpu->a1 , _cpu->a1);
+	fprintf(fp, "a2 : %5hu (0x%04x)\r\n", _cpu->a2 , _cpu->a2);
+	fprintf(fp, "a3 : %5hu (0x%04x)\r\n", _cpu->a3 , _cpu->a3);
+	fprintf(fp, "ins: %5hu (0x%04x)\r\n", _cpu->ins , _cpu->ins);
+	fprintf(fp, "Stack pointer: %p\r\n", (void*)_cpu->stack_pointer);
+	fprintf(fp, "Instruction counter: %llu\r\n", _cpu->ic);
 }
 
 void print_cpu_state(struct cpu *_cpu) {
@@ -68,8 +148,15 @@ void reset_cpu_state(struct cpu *_cpu) {
 }
 
 void free_cpu(struct cpu *_cpu) {
-	printf("[CPUZ16] unloading RAM\n");
-	free(_cpu->ram.cells);
+	printf("[CPUZ16] Unloading RAM\n");
+	if(_cpu->socket.is_connected) {
+		printf("[CPUZ16] Unlinking socket <%s>\n", _cpu->socket.sock_path);
+		close(_cpu->socket.epoll.plfd);
+	}
+	if (access(_cpu->socket.sock_path, F_OK) == 0) {
+		unlink(_cpu->socket.sock_path);
+	}
+	free(_cpu->bus.cells);
 }
 
 #endif
