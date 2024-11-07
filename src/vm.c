@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 	socket_init(&cpuz16, SOCKET_PATH);
 
 	// that's cool!
-	atexit(exit_func);
+	// atexit(exit_func);
     signal(SIGINT, sig_exit);
     signal(SIGKILL, sig_exit);
     signal(SIGABRT, sig_exit); 
@@ -117,6 +117,8 @@ end:
 	printf("\nVM reached end, halting...\n");
 	printf("Final VM state:\n");
 	print_cpu_state(&cpuz16);
+
+	exit_func();
 
 	return 0;
 }

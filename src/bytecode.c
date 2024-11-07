@@ -102,6 +102,11 @@ static bool if_jmp(struct instruction instr) {
 		case 0x0007:
 			return true;
 			break;
+		// Isn't compatible with -Wpedantic
+		// case 0x0010 ... 0x0015:
+		// 	return true;
+		// 	break;
+	}
 	if (instr.opcode >= 0x0010 && instr.opcode <= 0x0015)
 		return true;
 	return false;
