@@ -297,6 +297,7 @@ void append_define(struct compile_bytecode *compiler, define def, u16 *def_start
 	}
 	for (size_t i = 0; i < def.data_size; ++i) {
 		switch (def.def_type) {
+			case T_DEF_ASCIIZ:
 			case T_DEF_ASCII:
 				compiler->bytecode[define_ptr + i] = def.value.ascii[i];
 				break;
@@ -372,7 +373,8 @@ int main(int argc, char **argv) {
 	u16 def_start = TOTAL_CELLS;
 	for (size_t i = 0; i < def_block.count; ++i) {
 		if (def_block.def[i].def_type == T_DEF_DATA ||
-				def_block.def[i].def_type == T_DEF_ASCII) {
+				def_block.def[i].def_type == T_DEF_ASCII ||
+				def_block.def[i].def_type == T_DEF_ASCIIZ) {
 			printf("APPENDING DEFINE %s\n", def_block.def[i].name);
 			append_define(&compiler, def_block.def[i], &def_start, &bytecode_ptr); 
 		}

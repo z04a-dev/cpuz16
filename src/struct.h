@@ -33,7 +33,7 @@
 
 typedef struct define {
 	char *name;
-	enum{ T_DEF_NULL, T_DEF_IMM, T_DEF_ASCII, T_DEF_DATA} def_type;
+	enum{ T_DEF_NULL, T_DEF_IMM, T_DEF_ASCII, T_DEF_ASCIIZ, T_DEF_DATA} def_type;
 	union {
 		u16 imm;
 		char *ascii;

@@ -381,6 +381,8 @@ bool define_line(char *line, char *token, define_block *def_block) {
 		def.def_type = T_DEF_IMM;
 	} else if (strcmp(token, "ascii") == 0) {
 		def.def_type = T_DEF_ASCII;
+	} else if (strcmp(token, "asciiz") == 0) {
+		def.def_type = T_DEF_ASCIIZ;
 	} else if (strcmp(token, "data") == 0) {
 		def.def_type = T_DEF_DATA;
 	} else {
@@ -415,8 +417,8 @@ bool define_line(char *line, char *token, define_block *def_block) {
 						def.value.imm = (u16)atoi(token);
 					goto out;
 					break;
+				case T_DEF_ASCIIZ:
 				case T_DEF_ASCII:
-					asm("nop;");
 					start_ptr = strchr(line, '"');
 					if (start_ptr == NULL) {
 						printf("Incorrect ASCII define\n");
@@ -430,10 +432,11 @@ bool define_line(char *line, char *token, define_block *def_block) {
 					*end_ptr = '\0';
 					asprintf(&def.value.ascii, "%s", start_ptr + 1);
 					def.data_size = strlen(def.value.ascii);
+					if (def.def_type == T_DEF_ASCIIZ) 
+						def.data_size++;
 					goto out;
 					break;
 				case T_DEF_DATA:
-					asm("nop;");
 					start_ptr = strchr(line, '{') + 1;
 					end_ptr = strrchr(start_ptr, '}');
 					*end_ptr = '\0';
